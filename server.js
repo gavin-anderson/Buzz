@@ -10,6 +10,7 @@ const Joi = require('joi');
 
 const buzzKingABI = require("./abi/BuzzKing.json").abi;
 const buzzSharesABI = require("./abi/BuzzShares.json").abi;
+const faucetABI = require("./abi/Faucet.json").abi;
 
 // Enable CORS for client-side
 // Middleware to parse JSON bodies
@@ -85,7 +86,17 @@ const validateMetadata = (req, res, next) => {
     next();
 };
 // Validation for Ethereum Address
-const validateEthereumAddress = (req, res, next) => {
+const validateEthereumAddress= (req,res,next)=>{
+    const {user} = req.body;
+    if (/^0x[a-fA-F0-9]{40}$/.test(user)) {
+        next();
+    } else {
+        console.log("Not a valid Ethereum Address");
+        res.status(400).json({ message: "Invalid Ethereum address format." });
+    }
+}
+// Validation for Market Address
+const validateMarketAddress = (req, res, next) => {
     const { marketAddress } = req.params;
     // Regex to check if it's a valid Ethereum address
     if (/^0x[a-fA-F0-9]{40}$/.test(marketAddress)) {
@@ -111,6 +122,28 @@ const marketTradesData = mongoose.model('MarketTradesData', allMarketTransaction
 // REST API endPoints
 
 // Post Requests
+// Faucet
+app.post('/request-sepoliaEth',validateEthereumAddress, async (req,res) =>{
+    console.log("Recieved Faucet Request");
+    console.log(req.body);
+    try{
+        const rpcUrl = process.env.HARDHAT_URL;
+        const provider = new ethers.getDefaultProvider(rpcUrl);
+        const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+
+        const faucetContract = new ethers.Contract(process.env.FAUCET_ADDRESS, faucetABI,wallet);
+        const txResponse = await faucetContract.requestEth(req.body.user);
+        const receipt = await txResponse.wait();
+        console.log(receipt);
+        console.log(`Transaction hash: ${receipt.hash}`);
+        res.status(201).json({ message: 'Sepolia Eth Sent', data: receipt.hash });
+        
+    }catch(error){
+        console.log("Failed to send ETH");
+        res.status(500).json({ message: 'Error Requesting Eth', error: error });
+    }
+
+});
 // used for submitting meta data on created market
 app.post('/submit-metadata', validateMetadata, async (req, res) => {
     console.log(" Recieved Metadata");
@@ -149,7 +182,7 @@ app.get('/get-markets', ensureEmptyRequestBody, async (req, res) => {
     }
 });
 // Used to grab a specific market by ID
-app.get('/get-market/:marketAddress', validateEthereumAddress, async (req, res) => {
+app.get('/get-market/:marketAddress', validateMarketAddress, async (req, res) => {
     try {
         const market = await marketData.findOne({ marketAddress: req.params.marketAddress });
         if (!market) {
