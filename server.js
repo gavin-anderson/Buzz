@@ -8,9 +8,8 @@ const { ChainId } = require('@uniswap/sdk-core');
 const { Token, CurrencyAmount, Percent, TradeType } = require('@uniswap/sdk-core');
 const Joi = require('joi');
 
-const { fromReadableAmount } = require('./lib/conversions');
-const scalarFactoryABI = require("./abi/ScalarMarketFactory.json").abi;
-const uniFactoryABI = require("./abi/UniswapV3Factory.json").abi;
+const buzzKingABI = require("./abi/BuzzKing.json").abi;
+const buzzSharesABI = require("./abi/BuzzShares.json").abi;
 
 // Enable CORS for client-side
 // Middleware to parse JSON bodies
@@ -28,36 +27,54 @@ const Schema = mongoose.Schema;
 // MetaData Map
 const metadataMap = new Map();
 
+// event NewMarket(address marketAddress, string marketType);
+// event NewMint(address marketAddress, address subject, address user, uint256 amountSubjectSharesTaken, uint256 yesOrNoGiven, bool yesOrNo);
+// event RedeemDuringBinary(address marketAddress, address subject, address user, uint256 yesOrNoTaken, uint256 amountSubjectSharesGiven, bool yesOrNo);
+// event RedeemAfterBinary(address marketAddress, address subject, address user, uint256 amountSubjectSharesGiven);
+// event Trade(address trader, address subject, bool isBuy, uint256 shareAmount, uint256 ethAmount, uint256 protocolEthAmount, uint256 subjectEthAmount, uint256 supply);
+
 // Schemas for MongoDB
 // Schema for Created Markets Event Emitted by Scalar Factory
 const allMarketsSchema = new Schema({
-    ticker: String,
+    name: String,
     description: String,
-    vaultAddress: String,
-    longAddress: String,
-    shortAddress: String,
-    rangeOpen: Number,
-    rangeClose: Number,
+    marketAddress: String,
+    marketType: String,
     expiry: Date,
-    block_expiry: Number,
     creator: String,
     transactionHash: String,
     awaitingMetadata: { type: Boolean, default: false },
-    pools: [{
-        poolAddress: String,
-        feeTier: String,
-        tickSpacing: String
-    }]
 });
 
-// Validation Schemas
+const allShareTransactionsSchema = new Schema({
+    user: String,
+    creator: String,
+    isBuy: Boolean,
+    shareAmount: Number,
+    ethAmount: Number,
+    protocolEthAmount: Number,
+    subjectEthAmount: Number,
+    supplyTotal: Number
+});
+
+const allMarketTransactionsSchema = new Schema({
+    marketAddress: String,
+    creator: String,
+    user: String,
+    sharesAmount: Number,
+    yesAmount: Number,
+    noAmount: Number,
+    isMint: Boolean
+});
+// Validation Schemas for post requests
 // Schema for metaData submissions
 const metadataSchema = Joi.object({
-    ticker: Joi.string().required(),
+    name: Joi.string().required(),
     description: Joi.string().required(),
     expiry: Joi.date().required(),
     transactionHash: Joi.string().required()
 });
+
 // Middleware Validation
 // Validation for metaData
 const validateMetadata = (req, res, next) => {
@@ -68,10 +85,10 @@ const validateMetadata = (req, res, next) => {
     next();
 };
 // Validation for Ethereum Address
-const validateEthereumAddress = (req, res, next)=> {
-    const { vaultAddress } = req.params;
+const validateEthereumAddress = (req, res, next) => {
+    const { marketAddress } = req.params;
     // Regex to check if it's a valid Ethereum address
-    if (/^0x[a-fA-F0-9]{40}$/.test(vaultAddress)) {
+    if (/^0x[a-fA-F0-9]{40}$/.test(marketAddress)) {
         next();
     } else {
         res.status(400).json({ message: "Invalid Ethereum address format." });
@@ -87,15 +104,15 @@ const ensureEmptyRequestBody = (req, res, next) => {
     }
 }
 
-
 // Create models
 const marketData = mongoose.model('MarketData', allMarketsSchema);
-
+const shareTradesData = mongoose.model('SharesData', allShareTransactionsSchema);
+const marketTradesData = mongoose.model('MarketTradesData', allMarketTransactionsSchema)
 // REST API endPoints
 
 // Post Requests
 // used for submitting meta data on created market
-app.post('/submit-metadata',validateMetadata, async (req, res) => {
+app.post('/submit-metadata', validateMetadata, async (req, res) => {
     console.log(" Recieved Metadata");
     console.log(req.body);
     try {
@@ -108,59 +125,15 @@ app.post('/submit-metadata',validateMetadata, async (req, res) => {
             await market.save();
             console.log('Joined metadata and market data saved:', market);
             res.status(201).json({ message: 'Market Event Found Before MetaData Arrived', data: newData });
-        }else{
+        } else {
             metadataMap.set(transactionHash, newMetadata)
             console.log(`Data Saved in Dict`);
             res.status(201).json({ message: 'Data submitted no event yet', data: newData });
-            
+
         }
-        
+
     } catch (error) {
         res.status(500).json({ message: 'Error submitting data', error: error });
-    }
-});
-// Used for smart-order-swap-router
-app.post('/smart-router', async (req, res) => {
-    console.log("Recieved data for smart order request");
-    console.log(req.body);
-    try {
-        const rpcUrl = process.env.HARDHAT_URL;
-        const provider = new ethers.getDefaultProvider(rpcUrl);
-
-        const router = new AlphaRouter({
-            chainId: ChainId.MAINNET,
-            provider,
-        });
-
-        const options = new SwapOptionsSwapRouter02({
-            recipient: req.body.recipient,
-            slippageTolerance: new Percent(50, 10_000),
-            deadline: Math.floor(Date.now() / 1000 + 1800),
-            type: SwapType.SWAP_ROUTER_02,
-        });
-        const rawTokenAmountIn = fromReadableAmount(
-            CurrentConfig.currencies.amountIn,
-            CurrentConfig.currencies.in.decimals
-        );
-
-        const route = await router.route(
-            CurrencyAmount.fromRawAmount(
-                CurrentConfig.currencies.in,
-                rawTokenAmountIn
-            ),
-            CurrentConfig.currencies.out,
-            TradeType.EXACT_INPUT,
-            options
-        )
-
-        if (route && route.status === RouteStatus.Success) {
-            res.status(200).json(route);
-        } else {
-            throw new Error('Failed to find a route');
-        }
-
-    } catch (error) {
-        console.log(error);
     }
 });
 
@@ -176,9 +149,9 @@ app.get('/get-markets', ensureEmptyRequestBody, async (req, res) => {
     }
 });
 // Used to grab a specific market by ID
-app.get('/get-market/:vaultAddress',validateEthereumAddress, async (req, res) => {
+app.get('/get-market/:marketAddress', validateEthereumAddress, async (req, res) => {
     try {
-        const market = await marketData.findOne({ vaultAddress: req.params.vaultAddress });
+        const market = await marketData.findOne({ marketAddress: req.params.marketAddress });
         if (!market) {
             return res.status(404).json({ message: 'Market not found' });
         }
@@ -193,28 +166,36 @@ async function setupContractListeners() {
     const rpcUrl = process.env.HARDHAT_URL;
     const provider = new ethers.getDefaultProvider(rpcUrl);
 
-    const scalarFactoryAddress = process.env.SCALAR_MARKET_FACTORY;
-    const uniFactoryAddress = process.env.FACTORY_ADDRESS;
+    const buzzKingAddress = process.env.BUZZKING_ADDRESS;
+    const buzzSharesAddress = process.env.BUZZSHARES_ADDRESS;
 
-    const scalarFactoryContract = new ethers.Contract(scalarFactoryAddress, scalarFactoryABI, provider);
-    const uniFactoryContract = new ethers.Contract(uniFactoryAddress, uniFactoryABI, provider);
+    const buzzKingContract = new ethers.Contract(buzzKingAddress, buzzKingABI, provider);
+    const buzzSharesContract = new ethers.Contract(buzzSharesAddress, buzzSharesABI, provider);
+
     let marketCreated;
-    let poolCreated;
+    let mintAction;
+    let redeemDuring;
+    let redeemAfter;
+    let shareTraded;
+
     try {
-        marketCreated = scalarFactoryContract.filters.MarketCreated();
-        poolCreated = uniFactoryContract.filters.PoolCreated();
+        marketCreated = buzzKingContract.filters.NewMarket();
+        mintAction = buzzKingContract.filters.NewMint();
+        redeemDuring = buzzKingContract.filters.RedeemDuring();
+        redeemAfter = buzzKingContract.filters.RedeemAfter();
+        shareTraded = buzzSharesContract.filters.Trade();
 
     } catch (error) {
         console.log(error);
         console.error(error);
     }
-
-    scalarFactoryContract.on(marketCreated, async (eventPayload) => {
+    // New Market Created Listener
+    buzzKingContract.on(marketCreated, async (eventPayload) => {
         try {
             console.log("MARKET CREATED");
             const args = eventPayload.args;
             console.log(`Arguments in eventPayload ${args}`);
-            const [scalarMarketVaultClone, longTokenClone, shortTokenClone, startRange, endRange, expiry, creator] = args;
+            const [marketAddress, creator, marketType] = args;
 
             const _transactionHash = eventPayload.log.transactionHash;
             console.log(`TransactionHash: ${_transactionHash}`);
@@ -227,16 +208,11 @@ async function setupContractListeners() {
                 metadataMap.delete(_transactionHash);
                 const newMarketData = new marketData({
                     ...metadata,
-                    rangeOpen: Number(startRange) / 10 ** 18,
-                    rangeClose: Number(endRange) / 10 ** 18,
-                    block_expiry: Number(expiry),
-                    vaultAddress: scalarMarketVaultClone.toString(),
-                    longAddress: longTokenClone.toString(),
-                    shortAddress: shortTokenClone.toString(),
+                    marketAddress: marketAddress.toString(),
+                    marketType: marketType,
                     creator: creator.toString(),
                     transactionHash: _transactionHash,
-                    pools: [],
-                    awaitingMetadata:false
+                    awaitingMetadata: false
 
                 });
                 await newMarketData.save();
@@ -244,19 +220,14 @@ async function setupContractListeners() {
             } else {
                 // No matching metadata found, create new market data
                 const newMarketData = new marketData({
-                    vaultAddress: scalarMarketVaultClone.toString(),
-                    longAddress: longTokenClone.toString(),
-                    shortAddress: shortTokenClone.toString(),
-                    rangeOpen: Number(startRange) / 10 ** 18,
-                    rangeClose: Number(endRange) / 10 ** 18,
-                    block_expiry: Number(expiry),
-                    creator: creator.toString(),
-                    transactionHash: _transactionHash,
-                    ticker: "",
+                    name: "",
                     expiry: "",
                     description: "",
-                    pools: [],
-                    awaitingMetadata:true
+                    marketAddress: marketAddress.toString(),
+                    marketType: marketType,
+                    creator: creator.toString(),
+                    transactionHash: _transactionHash,
+                    awaitingMetadata: true
                 });
                 await newMarketData.save();
                 console.log('New market data saved without meta data:', newMarketData);
@@ -268,36 +239,97 @@ async function setupContractListeners() {
         console.log("Finished Process");
         console.log("----------------------------");
     });
-    uniFactoryContract.on(poolCreated, async (eventPayload) => {
+
+    buzzKingContract.on(mintAction, async (eventPayload) => {
         try {
-            console.log("POOL CREATED");
-            const [token0, token1, _fee, _tickSpacing, _poolAddress] = eventPayload.args;
-            console.log(token0);
-            console.log(token1);
-            console.log(_fee);
-            console.log(_tickSpacing);
-            console.log(_poolAddress);
-            const marketDataDocument = await marketData.findOne({
-                $or: [{ longAddress: token0 }, { shortAddress: token0 }]
+            console.log("NEW MINT");
+            const args = eventPayload.args;
+            console.log(`Arguments in eventPayload ${args}`);
+            const [marketAddress, creator, user, sharesAmount, yesOrNoAmount, yesOrNo] = args;
+            const newMarketTransaction = new marketTradesData({
+                marketAddress: marketAddress.toString(),
+                creator: creator.toString(),
+                user: user.toString(),
+                sharesAmount: sharesAmount,
+                yesAmount: yesOrNo ? yesOrNoAmount : 0,
+                noAmount: yesOrNo ? 0 : yesOrNoAmount,
+                isMint: true
             });
-            if (marketDataDocument) {
-                console.log('Matching marketData found:', marketDataDocument);
+            await newMarketTransaction.save();
+            console.log("Finished Process");
+            console.log("----------------------------");
+        } catch (error) {
+            console.log(error);
+        }
+    });
 
-                // Add the new pool details to the existing 'pools' array
-                marketDataDocument.pools.push({ poolAddress: _poolAddress, feeTier: _fee, tickSpacing: _tickSpacing });
-                // Save the updated document back to the database
-                await marketData.findByIdAndUpdate(marketDataDocument._id, marketDataDocument, { new: true });
+    buzzKingContract.on(redeemDuring, async (eventPayload) => {
+        try {
+            console.log("NEW REDEEM DURING");
+            console.log("Finished Process");
+            const args = eventPayload.args;
+            const [marketAddress, creator, user, sharesAmount, yesOrNoAmount, yesOrNo] = args;
+            const newMarketTransaction = new marketTradesData({
+                marketAddress: marketAddress.toString(),
+                creator: creator.toString(),
+                user: user.toString(),
+                sharesAmount: sharesAmount,
+                yesAmount: yesOrNo ? yesOrNoAmount : 0,
+                noAmount: yesOrNo ? 0 : yesOrNoAmount,
+                isMint: false
+            });
+            await newMarketTransaction.save();
+            console.log("----------------------------");
+        } catch (error) {
+            console.log(error);
+        }
+    });
 
-                console.log('Market data updated with pool address and fee tier:', marketDataDocument);
-            } else {
-                console.log('No matching marketData found.');
-            }
+    buzzKingContract.on(redeemAfter, async (eventPayload) => {
+        try {
+            console.log("NEW REDEEM AFTER");
+            const args = eventPayload.args;
+            const [marketAddress, creator, user, sharesAmount, yesAmount, noAmount] = args;
+            const newMarketTransaction = new marketTradesData({
+                marketAddress: marketAddress.toString(),
+                creator: creator.toString(),
+                user: user.toString(),
+                sharesAmount: sharesAmount,
+                yesAmount: yesAmount,
+                noAmount: noAmount,
+                isMint: false
+            });
+            await newMarketTransaction.save();
+            console.log("Finished Process");
+            console.log("----------------------------");
+        } catch (error) {
+            console.log(error);
+        }
+    });
+
+    buzzSharesContract.on(shareTraded, async (eventPayload) => {
+        try {
+            console.log("NEW SHARE TRADE");
+            const args = eventPayload.args;
+            const [user, creator, isBuy, shareAmount, ethAmount, protocolEthAmount, subjectEthAmount, supplyTotal] = args;
+            const newShareTransaction = new shareTradesData({
+                user: user,
+                creator: creator,
+                isBuy: isBuy,
+                shareAmount: shareAmount,
+                ethAmount: ethAmount,
+                protocolEthAmount: protocolEthAmount,
+                subjectEthAmount: subjectEthAmount,
+                supplyTotal: supplyTotal
+            });
+            newShareTransaction.save();
+            console.log("Finished Process");
+            console.log("----------------------------");
         } catch (error) {
             console.log(error);
         }
     });
 }
-
 // Set up contract listeners
 setupContractListeners();
 
