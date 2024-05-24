@@ -15,7 +15,7 @@ interface IBuzzBinary {
 
     function redeemDuring(address user, uint256 yesOrNoAmount, bool yesorNo) external returns (uint256 amountReturned);
 
-    function redeemAfter(address user) external returns (uint256 amountReturned);
+    function redeemAfter(address user) external returns (uint256 amountReturned, uint256 yesAmount, uint256 noAmount);
 
     function sqrt(uint256 x) external pure returns (uint256);
 }

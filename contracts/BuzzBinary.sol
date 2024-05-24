@@ -89,21 +89,25 @@ contract BuzzBinary {
         }
         return(amountReturned);
     }
-    function redeemAfter(address user) onlyKing public returns(uint256 amountReturned){
+    function redeemAfter(address user) onlyKing public returns(uint256 amountReturned, uint256 yesAmount, uint256 noAmount){
         require(isFinalValueSet, "Answer has not been submitted. Please use redeemDuring");
         YesNo storage position = addressBalances[user];
         require(position.yesAmount>0 || position.noAmount>0);
         if(finalValue){
-            amountReturned = position.yesAmount; 
+            amountReturned = position.yesAmount;
+            yesAmount = position.yesAmount;
+            noAmount = position.noAmount; 
             position.yesAmount = 0;
             position.noAmount = 0;
 
         }else{
             amountReturned = position.noAmount; 
+             yesAmount = position.yesAmount;
+            noAmount = position.noAmount; 
             position.yesAmount = 0;
             position.noAmount = 0;
         }
-        return(amountReturned);
+        return(amountReturned, yesAmount, noAmount);
     }
     
 
@@ -122,32 +126,4 @@ contract BuzzBinary {
         }
         return y;
     }
-
-
-    
-    // Events
-    // event MintLongShort(
-    //     address recipient,
-    //     uint256 amountInEth,
-    //     uint256 longShortOut
-    // );
-    // event MintAndSwap(
-    //     address recipient,
-    //     uint256 ethAmountIn,
-    //     uint256 longShortOut,
-    //     uint256 amountReceived,
-    //     bool swapToLong
-    // );
-    // event FinalValueSet(
-    //     uint256 fValue,
-    //     bool isFinalValueSet,
-    //     uint256 longPrice
-    // );
-    // event FinalRedeem(
-    //     address sender,
-    //     uint256 amountLIn,
-    //     uint256 amountRIn,
-    //     uint256 amountOut
-    // );
-
 }

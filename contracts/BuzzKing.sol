@@ -12,10 +12,10 @@ contract BuzzKing is BuzzBinaryDeployer{
     address immutable public buzzSharesAddress;
     mapping(address => mapping(address=>string)) public allMarkets;
 
-    event NewMarket(address marketAddress, string marketType);
-    event NewMint(address marketAddress, address subject, address user, uint256 amountSubjectSharesTaken, uint256 yesOrNoGiven, bool yesOrNo);
-    event RedeemDuringBinary(address marketAddress, address subject, address user, uint256 yesOrNoTaken, uint256 amountSubjectSharesGiven, bool yesOrNo);
-    event RedeemAfterBinary(address marketAddress, address subject, address user, uint256 amountSubjectSharesGiven);
+    event NewMarket( address marketAddress, address subject,string marketType);
+    event NewMint(address marketAddress, address subject, address user, uint256 shareAmount, uint256 yesOrNoAmount, bool yesOrNo);
+    event RedeemDuring(address marketAddress, address subject, address user, uint256 shareAmount, uint256 yesOrNoAmount, bool yesOrNo);
+    event RedeemAfter(address marketAddress, address subject, address user, uint256 shareAmount, uint256 yesAmount, uint256 noAmount);
     constructor(address _buzzSharesAddress){
         buzzSharesAddress=_buzzSharesAddress;
     }
@@ -23,7 +23,7 @@ contract BuzzKing is BuzzBinaryDeployer{
     function createBinary()external returns(address marketAddress){
         marketAddress = binaryDeploy(msg.sender, address(this));
         allMarkets[msg.sender][marketAddress] ='binary';
-        emit NewMarket(marketAddress,'binary');
+        emit NewMarket( marketAddress,msg.sender,'binary');
     }
 
     function mintBinaryposition(uint256 amountShares,address subject, address marketAddress, bool yesOrNo)public{
@@ -39,15 +39,15 @@ contract BuzzKing is BuzzBinaryDeployer{
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
         uint256 amountToReturn = IBuzzBinary(marketAddress).redeemDuring(msg.sender, yesOrNoAmount, yesOrNo)*2;
         IBuzzShares(buzzSharesAddress).transerFromContract(subject, msg.sender, marketAddress, amountToReturn);
-        emit RedeemDuringBinary(marketAddress,subject,msg.sender,yesOrNoAmount,amountToReturn,yesOrNo);
+        emit RedeemDuring(marketAddress,subject,msg.sender,amountToReturn,yesOrNoAmount,yesOrNo);
 
     }
     function redeemBinaryAfter(address subject, address marketAddress)public{
         string memory marketType = allMarkets[subject][marketAddress];
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
-        uint256 amountToReturn = IBuzzBinary(marketAddress).redeemAfter(msg.sender);
+        (uint256 amountToReturn, uint256 yesAmount, uint256 noAmount) = IBuzzBinary(marketAddress).redeemAfter(msg.sender);
         IBuzzShares(buzzSharesAddress).transerFromContract(subject, msg.sender, marketAddress, amountToReturn);
-        emit RedeemAfterBinary(marketAddress,subject,msg.sender,amountToReturn);
+        emit RedeemAfter(marketAddress,subject,msg.sender,amountToReturn, yesAmount, noAmount);
 
     }
 }
