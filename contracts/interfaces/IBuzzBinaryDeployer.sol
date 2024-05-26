@@ -5,7 +5,8 @@ interface IBuzzBinaryDeployer {
 
     function parameters() external view returns(
         address creator,
-        address positionManager
+        address buzzKing,
+        uint256 K
 
     );
 }

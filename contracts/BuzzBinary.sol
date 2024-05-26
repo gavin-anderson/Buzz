@@ -15,7 +15,7 @@ contract BuzzBinary {
     uint256 totalYesPool;
     uint256 totalNoPool;
     uint256 public immutable BASE = 10**18;
-    uint256 public immutable K = 1000000 * 10**18;
+    uint256 public immutable K;
     address public immutable creator;
     address public immutable king;
     bool finalValue;
@@ -33,7 +33,7 @@ contract BuzzBinary {
         _;
     }
     constructor(){
-        (creator, king) = IBuzzBinaryDeployer(msg.sender).parameters();
+        (creator, king, K) = IBuzzBinaryDeployer(msg.sender).parameters();
         totalYesPool = 1000 * BASE;       
         totalNoPool = 1000 * BASE;
         finalValue = false;
@@ -47,18 +47,20 @@ contract BuzzBinary {
     }
     
     function mintPosition(address user, uint256 amount, bool yesOrNo)onlyKing public returns(uint256 yesOrNoAmountToAdd){
+        require(user != creator,"Creator can not Participate");
        YesNo storage position = addressBalances[user];
        if(yesOrNo){
         uint256 yesToAdd = totalYesPool * BASE - (K * BASE / (totalNoPool + amount * BASE)) + amount * BASE;
         yesOrNoAmountToAdd = yesToAdd;
         position.yesAmount += yesToAdd;
+        position.noAmount = 0;
         totalNoPool = totalNoPool + (amount * BASE);
         totalYesPool = K / totalNoPool;
        }else{
         uint256 noToAdd = totalNoPool * BASE - (K * BASE / (totalYesPool + amount * BASE)) + amount * BASE;
         yesOrNoAmountToAdd = noToAdd;
         position.noAmount +=noToAdd;
-
+        position.yesAmount = 0;
         totalYesPool = totalYesPool + (amount * BASE);
         totalNoPool = K / totalYesPool;
        }
@@ -89,12 +91,13 @@ contract BuzzBinary {
         }
         return(amountReturned);
     }
-    function redeemAfter(address user) onlyKing public returns(uint256 amountReturned, uint256 yesAmount, uint256 noAmount){
+    function redeemAfter(address user) onlyKing public returns(uint256 amountReturned,uint256 amountToBurn, uint256 yesAmount, uint256 noAmount){
         require(isFinalValueSet, "Answer has not been submitted. Please use redeemDuring");
         YesNo storage position = addressBalances[user];
         require(position.yesAmount>0 || position.noAmount>0);
         if(finalValue){
             amountReturned = position.yesAmount;
+            amountToBurn = position.noAmount;
             yesAmount = position.yesAmount;
             noAmount = position.noAmount; 
             position.yesAmount = 0;
@@ -102,12 +105,13 @@ contract BuzzBinary {
 
         }else{
             amountReturned = position.noAmount; 
-             yesAmount = position.yesAmount;
+            amountToBurn = position.yesAmount;
+            yesAmount = position.yesAmount;
             noAmount = position.noAmount; 
             position.yesAmount = 0;
             position.noAmount = 0;
         }
-        return(amountReturned, yesAmount, noAmount);
+        return(amountReturned, amountToBurn, yesAmount, noAmount);
     }
     
 

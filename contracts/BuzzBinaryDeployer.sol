@@ -7,14 +7,15 @@ import './BuzzBinary.sol';
 contract BuzzBinaryDeployer is IBuzzBinaryDeployer{
     struct Parameters{
         address creator;
-        address positionManager;
+        address buzzKing;
+        uint256 K;
     }
 
     Parameters public override parameters;
 
 
-    function binaryDeploy(address creator, address positonManager) internal returns(address market){
-        parameters = Parameters({creator: creator, positionManager: positonManager});
+    function binaryDeploy(address creator, address buzzKing, uint256 K) internal returns(address market){
+        parameters = Parameters({creator: creator, buzzKing: buzzKing, K: K});
         market = address(new BuzzBinary());
         delete parameters;
     }
