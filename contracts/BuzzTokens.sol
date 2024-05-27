@@ -88,12 +88,13 @@ contract BuzzTokens is Ownable {
         // require(msg.value >= price + protocolFee + creatorFee, "Insufficient payment");
         tokensBalance[tokensCreator][msg.sender] = tokensBalance[tokensCreator][msg.sender] + amount;
         tokensSupply[tokensCreator] = supply + amount;
+        lastPrice[tokensCreator] = price;
         emit Trade(msg.sender, tokensCreator, true, amount, price, protocolFee, creatorFee, supply + amount);
 
         require(token.transferFrom(msg.sender, protocolFeeDestination, protocolFee), "Failed to send Protocol Fee");
         require(token.transferFrom(msg.sender, tokensCreator, creatorFee),"Failed to send creator Fee");
         require(token.transferFrom(msg.sender, address(this), price),"Failed to send Price");
-        lastPrice[tokensCreator] = price;
+        
         // (bool success1, ) = protocolFeeDestination.call{value: protocolFee}("");
         // (bool success2, ) = tokensCreator.call{value: creatorFee}("");
         // require(success1 && success2, "Unable to send funds");
@@ -107,12 +108,13 @@ contract BuzzTokens is Ownable {
         uint256 creatorFee = price * creatorFeePercent / 1 ether;
         tokensBalance[tokensCreator][msg.sender] = tokensBalance[tokensCreator][msg.sender] - amount;
         tokensSupply[tokensCreator] = supply - amount;
+        lastPrice[tokensCreator] = price;
         emit Trade(msg.sender, tokensCreator, false, amount, price, protocolFee, creatorFee, supply - amount);
 
         require(token.transferFrom(address(this), msg.sender, price - protocolFee - creatorFee),"Failed to Transfer To msg.sender");
         require(token.transferFrom(address(this),protocolFeeDestination, protocolFee),"Failed to Transfer To msg.sender");
         require(token.transferFrom(address(this), tokensCreator, creatorFee),"Failed to Transfer To msg.sender");
-        lastPrice[tokensCreator] = price;
+        
         // (bool success1, ) = msg.sender.call{value: price - protocolFee - creatorFee}("");
         // (bool success2, ) = protocolFeeDestination.call{value: protocolFee}("");
         // (bool success3, ) = tokensCreator.call{value: creatorFee}("");

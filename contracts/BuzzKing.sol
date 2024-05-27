@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
+import'./NoDelegateCall.sol';
 import './BuzzBinaryDeployer.sol';
 import './BuzzBinary.sol';
 
@@ -10,12 +11,11 @@ import './interfaces/IBuzzBinary.sol';
 import './interfaces/IBuzzTokens.sol';
 import './interfaces/IETH20.sol';
 
-contract BuzzKing is BuzzBinaryDeployer, Ownable{
+contract BuzzKing is BuzzBinaryDeployer, Ownable, NoDelegateCall{
 
     IBuzzTokens immutable public buzzTokens;
     IETH20 immutable public ETH20;
     // mapping(address => mapping(address=>string)) public allMarkets;
-    uint256 public K;
 
     event NewMarket( address buzzMarketAddress, address tokensCreator,string marketType);
     event NewMint(address buzzMarketAddress, address tokensCreator, address buzzUser, uint256 shareAmount, uint256 yesOrNoAmount, bool yesOrNo);
@@ -26,11 +26,11 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable{
         buzzTokens=IBuzzTokens(_buzzTokensAddress);
         ETH20 = IETH20(_ETH20);
     }
-    function setK(uint256 _k)public onlyOwner{
-        K=_k;
-    }
-    function createBinary()external returns(address buzzMarketAddress){
-        buzzMarketAddress = binaryDeploy(msg.sender, address(this), K);
+  
+    function createBinary()external noDelegateCall returns(address buzzMarketAddress){
+        uint256 supply = buzzTokens.tokensSupply(msg.sender);
+        require(supply>0, "Create Tokens First");
+        buzzMarketAddress = binaryDeploy(msg.sender, address(this), supply/100);
         // allMarkets[msg.sender][buzzMarketAddress] ='binary';
         buzzTokens.addMarket(msg.sender, buzzMarketAddress, "binary");
         emit NewMarket( buzzMarketAddress,msg.sender,'binary');
@@ -40,9 +40,10 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable{
         string memory marketType = buzzTokens.allMarkets(tokensCreator, buzzMarketAddress);
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
         uint256 burnAmount = amountTokens/100;
-        buzzTokens.burnToken(tokensCreator,buzzMarketAddress,burnAmount);
         buzzTokens.transferToContract(tokensCreator, msg.sender, buzzMarketAddress, amountTokens-burnAmount);
         uint256 yesOrNoAdded = IBuzzBinary(buzzMarketAddress).mintPosition(msg.sender, amountTokens, yesOrNo);
+
+        buzzTokens.burnTokens(tokensCreator,buzzMarketAddress,burnAmount);
         emit NewMint(buzzMarketAddress, tokensCreator, msg.sender, amountTokens, yesOrNoAdded, yesOrNo);
 
     }
