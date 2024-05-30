@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import'./NoDelegateCall.sol';
 import './BuzzBinaryDeployer.sol';
 import './BuzzBinary.sol';
+import'./NoDelegateCall.sol';
 
 import './interfaces/IBuzzBinary.sol';
 import './interfaces/IBuzzTokens.sol';
@@ -21,7 +21,7 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable, NoDelegateCall{
     event NewMint(address buzzMarketAddress, address tokensCreator, address buzzUser, uint256 shareAmount, uint256 yesOrNoAmount, bool yesOrNo);
     event RedeemDuring(address buzzMarketAddress, address tokensCreator, address buzzUser, uint256 shareAmount, uint256 yesOrNoAmount, bool yesOrNo);
     event RedeemAfter(address buzzMarketAddress, address tokensCreator, address buzzUser, uint256 shareAmount, uint256 yesAmount, uint256 noAmount);
-
+    event AnswerSubmitted(bool answer);
     constructor(address _buzzTokensAddress, address _ETH20)Ownable(msg.sender){
         buzzTokens=IBuzzTokens(_buzzTokensAddress);
         ETH20 = IETH20(_ETH20);
@@ -31,23 +31,31 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable, NoDelegateCall{
         uint256 supply = buzzTokens.tokensSupply(msg.sender);
         require(supply>0, "Create Tokens First");
         buzzMarketAddress = binaryDeploy(msg.sender, address(this), supply/100);
-        // allMarkets[msg.sender][buzzMarketAddress] ='binary';
         buzzTokens.addMarket(msg.sender, buzzMarketAddress, "binary");
         emit NewMarket( buzzMarketAddress,msg.sender,'binary');
     }
 
-    function mintBinaryposition(address tokensCreator, address buzzMarketAddress,uint256 amountTokens, bool yesOrNo)public{
+    function submitBinaryAnswer(address buzzMarketAddress, bool finalValue) external{
+        string memory marketType = buzzTokens.allMarkets(msg.sender, buzzMarketAddress);
+        require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
+        emit AnswerSubmitted(finalValue);
+        uint256 amountToBurn = IBuzzBinary(buzzMarketAddress).submitAnswer(msg.sender,finalValue);
+        buzzTokens.burnTokens(msg.sender,buzzMarketAddress,amountToBurn);
+    }
+
+    function mintBinaryPosition(address tokensCreator, address buzzMarketAddress,uint256 amountTokens, bool yesOrNo)public{
+        require(amountTokens>0, "Select an Amount to Mint");
         string memory marketType = buzzTokens.allMarkets(tokensCreator, buzzMarketAddress);
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
         uint256 burnAmount = amountTokens/100;
-        buzzTokens.transferToContract(tokensCreator, msg.sender, buzzMarketAddress, amountTokens-burnAmount);
-        uint256 yesOrNoAdded = IBuzzBinary(buzzMarketAddress).mintPosition(msg.sender, amountTokens, yesOrNo);
-
-        buzzTokens.burnTokens(tokensCreator,buzzMarketAddress,burnAmount);
+        buzzTokens.transferToContract(tokensCreator, msg.sender, buzzMarketAddress, amountTokens);
+        buzzTokens.burnTokens(tokensCreator, buzzMarketAddress, burnAmount);
+        uint256 yesOrNoAdded = IBuzzBinary(buzzMarketAddress).mintPosition(msg.sender, amountTokens - burnAmount, yesOrNo);
         emit NewMint(buzzMarketAddress, tokensCreator, msg.sender, amountTokens, yesOrNoAdded, yesOrNo);
 
     }
     function redeemBinaryDuring(address tokensCreator, address buzzMarketAddress, uint256 yesOrNoAmount, bool yesOrNo)public{
+        require(yesOrNoAmount>0, "Can not redeem 0");
         string memory marketType = buzzTokens.allMarkets(tokensCreator, buzzMarketAddress);
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
         uint256 amountToReturn = IBuzzBinary(buzzMarketAddress).redeemDuring(msg.sender, yesOrNoAmount, yesOrNo);
@@ -58,21 +66,19 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable, NoDelegateCall{
     function redeemBinaryAfter(address tokensCreator, address buzzMarketAddress)public{
         string memory marketType = buzzTokens.allMarkets(tokensCreator, buzzMarketAddress);
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
-        (uint256 amountToReturn,uint256 amountToBurn, uint256 yesAmount, uint256 noAmount) = IBuzzBinary(buzzMarketAddress).redeemAfter(msg.sender);
-        if(amountToBurn>0){
-            buzzTokens.burnTokens(tokensCreator,buzzMarketAddress,amountToBurn);
-        }if(amountToReturn>0){
+        (uint256 amountToReturn, uint256 yesAmount, uint256 noAmount) = IBuzzBinary(buzzMarketAddress).redeemAfter(msg.sender);
+       if(amountToReturn>0){
             uint256 marketBalance = buzzTokens.tokensBalance(tokensCreator, buzzMarketAddress);
-            if(marketBalance>= amountToReturn*2){
-                buzzTokens.transerFromContract(tokensCreator,msg.sender, buzzMarketAddress,amountToReturn*2);
+            if(marketBalance>= amountToReturn){
+                buzzTokens.transerFromContract(tokensCreator,msg.sender, buzzMarketAddress,amountToReturn);
             }else{
                 if(marketBalance>0){
                     buzzTokens.burnTokens(tokensCreator,buzzMarketAddress,marketBalance);
                 }
-                buzzTokens.mintTokens(tokensCreator,msg.sender, amountToReturn*2);
+                buzzTokens.mintTokens(tokensCreator,msg.sender, amountToReturn);
             }
         }
-        emit RedeemAfter(buzzMarketAddress,tokensCreator,msg.sender,amountToReturn*2, yesAmount, noAmount);
+        emit RedeemAfter(buzzMarketAddress,tokensCreator,msg.sender,amountToReturn, yesAmount, noAmount);
 
     }
 }

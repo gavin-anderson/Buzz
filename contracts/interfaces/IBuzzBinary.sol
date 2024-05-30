@@ -22,8 +22,8 @@ interface IBuzzBinary {
     function addressBalances(address user) external view returns (YesNo memory);
 
     // State-changing functions
-    function submitAnswer(bool _finalValue) external;
+    function submitAnswer(address _creator, bool _finalValue) external returns(uint256 amountToBurn);
     function mintPosition(address user, uint256 amount, bool yesOrNo) external returns (uint256 yesOrNoAmountToAdd);
     function redeemDuring(address user, uint256 yesOrNoAmount, bool yesOrNo) external returns (uint256 amountReturned);
-    function redeemAfter(address user) external returns (uint256 amountReturned, uint256 amountToBurn, uint256 yesAmount, uint256 noAmount);
+    function redeemAfter(address user) external returns (uint256 amountReturned, uint256 yesAmount, uint256 noAmount);
 }

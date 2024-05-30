@@ -11,9 +11,10 @@ contract BuzzBinary {
         uint256 noAmount;
     }
 
-    mapping(address=>YesNo) addressBalances;
-    uint256 totalYesPool;
-    uint256 totalNoPool;
+    mapping(address=>YesNo) public addressBalances;
+    uint256 public totalYesPool;
+    uint256 public totalNoPool;
+    uint256 public immutable startingPosition;
     uint256 public immutable BASE = 10**18;
     uint256 public immutable K;
     address public immutable creator;
@@ -21,7 +22,6 @@ contract BuzzBinary {
     bool finalValue;
     bool isFinalValueSet;
 
-    event AnswerSubmitted(bool answer);
     // event PositionMinted(address user, uint256 sharesAmount, uint256 yesOrNoAmountToAdd, bool yesOrNo);
     // event RedeemDuring(address user, uint256 amountToReturn, bool yesOrNo);
     modifier onlyCreator() {
@@ -33,71 +33,86 @@ contract BuzzBinary {
         _;
     }
     constructor(){
-        (creator, king, K) = IBuzzBinaryDeployer(msg.sender).parameters();
-        totalYesPool = 1000 * BASE;       
-        totalNoPool = 1000 * BASE;
+        uint256 yesNoAmountPools;
+        (creator, king, yesNoAmountPools) = IBuzzBinaryDeployer(msg.sender).parameters();
+        totalYesPool = yesNoAmountPools;
+        totalNoPool = yesNoAmountPools;
+        startingPosition = yesNoAmountPools;      
+        K = totalYesPool*totalNoPool/1 ether;
         finalValue = false;
         isFinalValueSet = false;
     }
 
-    function submitAnswer(bool _finalValue) onlyCreator public{
+    function submitAnswer(address _creator, bool _finalValue) public onlyKing returns(uint256 amountToBurn){
+        require(creator == _creator, "only Creator can SubmitAnswer");
         finalValue = _finalValue;
         isFinalValueSet = true;
-        emit AnswerSubmitted(finalValue);
+        amountToBurn = burnAmount(_finalValue);
+    }
+
+    function burnAmount(bool _finalValue)internal  view returns(uint256 amountToBurn){
+        require(isFinalValueSet, "Answer has not been submitted. No Burning");
+
+        if(_finalValue && totalYesPool>totalNoPool){
+            amountToBurn = totalYesPool- startingPosition;
+        }
+        if(!_finalValue && totalNoPool>totalYesPool){
+            amountToBurn = totalNoPool - startingPosition;
+        }
+        
     }
     
-    function mintPosition(address user, uint256 amount, bool yesOrNo)onlyKing public returns(uint256 yesOrNoAmountToAdd){
+    function mintPosition(address user, uint256 amount, bool yesOrNo) public onlyKing returns(uint256 yesOrNoAmountToAdd){
         require(user != creator,"Creator can not Participate");
        YesNo storage position = addressBalances[user];
        if(yesOrNo){
-        uint256 yesToAdd = totalYesPool * BASE - (K * BASE / (totalNoPool + amount * BASE)) + amount * BASE;
+        uint256 yesToAdd = totalYesPool - (K * 1 ether / (totalNoPool + amount)) + amount;
         yesOrNoAmountToAdd = yesToAdd;
-        position.yesAmount += yesToAdd;
-        position.noAmount = 0;
-        totalNoPool = totalNoPool + (amount * BASE);
-        totalYesPool = K / totalNoPool;
+        position.yesAmount = position.yesAmount + yesToAdd;
+        totalNoPool = totalNoPool + amount;
+        totalYesPool = K * 1 ether/ totalNoPool;
        }else{
-        uint256 noToAdd = totalNoPool * BASE - (K * BASE / (totalYesPool + amount * BASE)) + amount * BASE;
+        uint256 noToAdd = totalNoPool  - (K * 1 ether / (totalYesPool + amount)) + amount ;
         yesOrNoAmountToAdd = noToAdd;
-        position.noAmount +=noToAdd;
-        position.yesAmount = 0;
-        totalYesPool = totalYesPool + (amount * BASE);
-        totalNoPool = K / totalYesPool;
+        position.noAmount = position.noAmount + noToAdd;
+        totalYesPool = totalYesPool + amount;
+        totalNoPool = K* 1 ether/ totalYesPool;
        }
         return(yesOrNoAmountToAdd);
     }
 
-    function redeemDuring(address user, uint256 yesOrNoAmount, bool yesOrNo)onlyKing public returns(uint256 amountReturned){
+    function redeemDuring(address user, uint256 yesOrNoAmount, bool yesOrNo) public onlyKing returns(uint256 amountReturned){
 
         require(!isFinalValueSet, "Answer has been submitted. Please use redeemAfter");
         YesNo storage position = addressBalances[user];
 
          if(yesOrNo){
-            uint256 discriminate = (totalYesPool + totalNoPool + yesOrNoAmount * BASE)**2 - 4*(totalYesPool * totalNoPool + totalNoPool * yesOrNoAmount * BASE - K);
-            uint256 sqRoot = sqrt(discriminate)*10**6;
-            uint256 zero = (totalYesPool + totalNoPool + yesOrNoAmount * BASE - sqRoot) / 2;
+            require(position.yesAmount>=yesOrNoAmount, "Not enough Yes in your positions");
+            uint256 discriminate = ((totalYesPool + totalNoPool + yesOrNoAmount )**2)/1 ether - 4*(totalYesPool * totalNoPool/ 1 ether + totalNoPool * yesOrNoAmount/ 1 ether - K);
+            uint256 sqRoot = sqrt(discriminate);
+            uint256 zero = (totalYesPool + totalNoPool + yesOrNoAmount - sqRoot) / 2;
             amountReturned = zero;
             position.yesAmount = position.yesAmount - zero;
-            totalNoPool = totalNoPool - yesOrNoAmount * BASE;
-            totalYesPool = K / totalNoPool;
+            totalNoPool = totalNoPool - zero;
+            totalYesPool = K* 1 ether / totalNoPool;
         }else{
-            uint256 discriminate = (totalYesPool + totalNoPool + yesOrNoAmount * BASE)**2 - 4*(totalYesPool * totalNoPool + totalYesPool * yesOrNoAmount * BASE - K);
-            uint256 sqRoot = sqrt(discriminate)*10**6;
-            uint256 zero = (totalYesPool + totalNoPool + yesOrNoAmount * BASE - sqRoot) / 2;
+            require(position.noAmount>=yesOrNoAmount, "Not enough No in your positions");
+            uint256 discriminate = (totalYesPool + totalNoPool + yesOrNoAmount)**2/1 ether - 4*(totalYesPool * totalNoPool/ 1 ether + totalYesPool * yesOrNoAmount/ 1 ether - K);
+            uint256 sqRoot = sqrt(discriminate);
+            uint256 zero = (totalYesPool + totalNoPool + yesOrNoAmount - sqRoot) / 2;
             amountReturned = zero;
             position.noAmount = position.noAmount - zero;
-            totalYesPool = totalYesPool - yesOrNoAmount * BASE;
-            totalNoPool = K / totalYesPool;
+            totalYesPool = totalYesPool - zero;
+            totalNoPool = K * 1 ether / totalYesPool;
         }
         return(amountReturned);
     }
-    function redeemAfter(address user) onlyKing public returns(uint256 amountReturned,uint256 amountToBurn, uint256 yesAmount, uint256 noAmount){
+    function redeemAfter(address user)  public onlyKing returns(uint256 amountReturned, uint256 yesAmount, uint256 noAmount){
         require(isFinalValueSet, "Answer has not been submitted. Please use redeemDuring");
         YesNo storage position = addressBalances[user];
         require(position.yesAmount>0 || position.noAmount>0);
         if(finalValue){
             amountReturned = position.yesAmount;
-            amountToBurn = position.noAmount;
             yesAmount = position.yesAmount;
             noAmount = position.noAmount; 
             position.yesAmount = 0;
@@ -105,28 +120,24 @@ contract BuzzBinary {
 
         }else{
             amountReturned = position.noAmount; 
-            amountToBurn = position.yesAmount;
             yesAmount = position.yesAmount;
             noAmount = position.noAmount; 
             position.yesAmount = 0;
             position.noAmount = 0;
         }
-        return(amountReturned, amountToBurn, yesAmount, noAmount);
+        return(amountReturned, yesAmount, noAmount);
     }
     
-
-    function sqrt(uint256 x) internal pure returns (uint256) {
-        // Babylonian
-        
+    function sqrt(uint256 x) public pure returns (uint256) {
+        // Babylonian method
         if (x == 0) {
             return 0;
         }
-        x = x / 10**12;
-        uint256 z = (x + 1) / 2;
+        uint256 z = (x + 1 ether) / 2;
         uint256 y = x;
         while (z < y) {
             y = z;
-            z = (x / z + z) / 2;
+            z = ((x * 1 ether)/ z + z) / 2;
         }
         return y;
     }

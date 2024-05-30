@@ -122,12 +122,13 @@ contract BuzzTokens is Ownable {
     }
 
     function transferToContract(address tokensCreator, address buzzUser, address buzzMarket, uint256 amount)public onlyKing{
-        require(amount<= tokensBalance[tokensCreator][buzzUser], "Not enough Tokens");
+        require(amount<= tokensBalance[tokensCreator][buzzUser], "Not enough Tokens held by user");
         tokensBalance[tokensCreator][buzzUser] = tokensBalance[tokensCreator][buzzUser] - amount;
         tokensBalance[tokensCreator][buzzMarket] = tokensBalance[tokensCreator][buzzMarket] + amount;
     }
 
     function transerFromContract(address tokensCreator, address buzzUser, address buzzMarket, uint256 amount) public onlyKing{
+        require(amount<= tokensBalance[tokensCreator][buzzMarket], "Market Doesn't have enough tokens. It should have minted");
         tokensBalance[tokensCreator][buzzUser] = tokensBalance[tokensCreator][buzzUser] + amount;
         tokensBalance[tokensCreator][buzzMarket] = tokensBalance[tokensCreator][buzzMarket] - amount;
     }
@@ -144,20 +145,14 @@ contract BuzzTokens is Ownable {
         updateCurveConstant(tokensCreator);
     }
 
-    function updateCurveConstant(address tokensCreator)internal{
+    function updateCurveConstant(address tokensCreator)private{
         uint256 price = lastPrice[tokensCreator];
         uint256 newCurve = price*10**8/((tokensSupply[tokensCreator]**2)/1 ether);
         curveConstants[tokensCreator] = newCurve;
     }
-    // function getTokensBalance(address tokensCreator, address buzzUser)public view returns(uint256 balance){
-    //     balance = tokensBalance[tokensCreator][buzzUser];
-    // }
+
    function addMarket(address tokensCreator, address buzzMarket, string memory marketType)public onlyKing{
         allMarkets[tokensCreator][buzzMarket] = marketType;
     }
-    
-    // function getMarketType(address tokensCreator, address buzzMarket)public view returns(marketType){
-    //     string memory marketType = allMarkets[tokensCreator][buzzMarket];
-    // }
 
 }
