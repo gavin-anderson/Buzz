@@ -21,8 +21,6 @@ contract BuzzTokens is Ownable {
     mapping(address => uint256) public tokensSupply;
     // tokensCreator => curveConstant
     mapping(address => uint256) public curveConstants;
-    // tokensCreator => lastPrice
-    mapping(address => uint256) public lastPrice;
 
     modifier onlyKing() {
         require(msg.sender == king, "only BuzzKing Contract");
@@ -48,8 +46,8 @@ contract BuzzTokens is Ownable {
     }
 
     function getPrice(uint256 supply, uint256 amount, uint256 curveConstant) public pure returns (uint256) {
-        uint256 sum1 = curveConstant*supply**2/10**44;
-        uint256 sum2 = curveConstant*(supply+amount)**2/10**44;
+        uint256 sum1 = curveConstant*(supply**3/10**36)/(2*10**31);
+        uint256 sum2 = curveConstant*((supply+amount)**3/10**36)/(2*10**31);
         return sum2-sum1;
     }
 
@@ -88,7 +86,6 @@ contract BuzzTokens is Ownable {
         // require(msg.value >= price + protocolFee + creatorFee, "Insufficient payment");
         tokensBalance[tokensCreator][msg.sender] = tokensBalance[tokensCreator][msg.sender] + amount;
         tokensSupply[tokensCreator] = supply + amount;
-        lastPrice[tokensCreator] = price;
         emit Trade(msg.sender, tokensCreator, true, amount, price, protocolFee, creatorFee, supply + amount);
 
         require(token.transferFrom(msg.sender, protocolFeeDestination, protocolFee), "Failed to send Protocol Fee");
@@ -108,7 +105,6 @@ contract BuzzTokens is Ownable {
         uint256 creatorFee = price * creatorFeePercent / 1 ether;
         tokensBalance[tokensCreator][msg.sender] = tokensBalance[tokensCreator][msg.sender] - amount;
         tokensSupply[tokensCreator] = supply - amount;
-        lastPrice[tokensCreator] = price;
         emit Trade(msg.sender, tokensCreator, false, amount, price, protocolFee, creatorFee, supply - amount);
 
         require(token.transferFrom(address(this), msg.sender, price - protocolFee - creatorFee),"Failed to Transfer To msg.sender");
@@ -134,20 +130,21 @@ contract BuzzTokens is Ownable {
     }
 
     function burnTokens(address tokensCreator, address buzzMarket, uint256 amount)public onlyKing{
+        uint256 lastP = curveConstants[tokensCreator]*(tokensSupply[tokensCreator]**3/10**36)/(2*10**31);
         tokensBalance[tokensCreator][buzzMarket] = tokensBalance[tokensCreator][buzzMarket] - amount;
         tokensSupply[tokensCreator] = tokensSupply[tokensCreator] - amount;
-        updateCurveConstant(tokensCreator);
+        updateCurveConstant(tokensCreator, lastP);
     }
 
     function mintTokens(address tokensCreator, address buzzUser, uint256 amount)public onlyKing{
+        uint256 lastP = curveConstants[tokensCreator]*(tokensSupply[tokensCreator]**3/10**36)/(2*10**31);
         tokensBalance[tokensCreator][buzzUser] = tokensBalance[tokensCreator][buzzUser] + amount;
         tokensSupply[tokensCreator] = tokensSupply[tokensCreator] + amount;
-        updateCurveConstant(tokensCreator);
+        updateCurveConstant(tokensCreator,lastP);
     }
 
-    function updateCurveConstant(address tokensCreator)private{
-        uint256 price = lastPrice[tokensCreator];
-        uint256 newCurve = price*10**8/((tokensSupply[tokensCreator]**2)/1 ether);
+    function updateCurveConstant(address tokensCreator, uint256 lastP)private{  
+        uint256 newCurve = 1 ether *lastP*10**13/((tokensSupply[tokensCreator]**3)/(2*10**36));
         curveConstants[tokensCreator] = newCurve;
     }
 

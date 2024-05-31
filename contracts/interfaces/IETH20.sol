@@ -9,4 +9,5 @@ interface IETH20 {
     function setBuzzShares(address _privilegedContract) external;
     function transferFrom(address from, address to, uint256 value) external returns (bool);
     function specialMint(address to) external;
+    function balanceOf(address account) external returns(uint256);
 }

@@ -19,8 +19,8 @@ contract BuzzBinary {
     uint256 public immutable K;
     address public immutable creator;
     address public immutable king;
-    bool finalValue;
-    bool isFinalValueSet;
+    bool public finalValue;
+    bool public isFinalValueSet;
 
     // event PositionMinted(address user, uint256 sharesAmount, uint256 yesOrNoAmountToAdd, bool yesOrNo);
     // event RedeemDuring(address user, uint256 amountToReturn, bool yesOrNo);
@@ -55,11 +55,13 @@ contract BuzzBinary {
 
         if(_finalValue && totalYesPool>totalNoPool){
             amountToBurn = totalYesPool- startingPosition;
+            return amountToBurn;
         }
         if(!_finalValue && totalNoPool>totalYesPool){
             amountToBurn = totalNoPool - startingPosition;
+            return amountToBurn;
         }
-        
+        amountToBurn = 0;
     }
     
     function mintPosition(address user, uint256 amount, bool yesOrNo) public onlyKing returns(uint256 yesOrNoAmountToAdd){
@@ -92,7 +94,7 @@ contract BuzzBinary {
             uint256 sqRoot = sqrt(discriminate);
             uint256 zero = (totalYesPool + totalNoPool + yesOrNoAmount - sqRoot) / 2;
             amountReturned = zero;
-            position.yesAmount = position.yesAmount - zero;
+            position.yesAmount = position.yesAmount - yesOrNoAmount;
             totalNoPool = totalNoPool - zero;
             totalYesPool = K* 1 ether / totalNoPool;
         }else{
@@ -101,7 +103,7 @@ contract BuzzBinary {
             uint256 sqRoot = sqrt(discriminate);
             uint256 zero = (totalYesPool + totalNoPool + yesOrNoAmount - sqRoot) / 2;
             amountReturned = zero;
-            position.noAmount = position.noAmount - zero;
+            position.noAmount = position.noAmount - yesOrNoAmount;
             totalYesPool = totalYesPool - zero;
             totalNoPool = K * 1 ether / totalYesPool;
         }

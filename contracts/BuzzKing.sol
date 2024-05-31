@@ -40,7 +40,14 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable, NoDelegateCall{
         require(keccak256(abi.encodePacked(marketType)) == keccak256(abi.encodePacked('binary')), "Not a Binary Market");
         emit AnswerSubmitted(finalValue);
         uint256 amountToBurn = IBuzzBinary(buzzMarketAddress).submitAnswer(msg.sender,finalValue);
-        buzzTokens.burnTokens(msg.sender,buzzMarketAddress,amountToBurn);
+        uint256 marketBalance = buzzTokens.tokensBalance(msg.sender, buzzMarketAddress);
+        // amountToBurn can be greater than MarketBalance as a result of rounding. This is needed to prevent panic code 0x11
+        if(amountToBurn>marketBalance){ 
+            buzzTokens.burnTokens(msg.sender,buzzMarketAddress,marketBalance);
+        }else{
+            buzzTokens.burnTokens(msg.sender,buzzMarketAddress,amountToBurn);
+        }
+        
     }
 
     function mintBinaryPosition(address tokensCreator, address buzzMarketAddress,uint256 amountTokens, bool yesOrNo)public{

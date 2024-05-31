@@ -12,8 +12,10 @@ const protocolFeeAmount = "0.05"
 const creatorFeeAmount = "0.05"
 // Market 1
 const user1TokenC1Buy = "1000"
-const user1MintAmountC1Market = "15";
+const user1MintYESAmount = "900";
+const user1MintNOAmount = "10";
 const user1MintC1MarketDirection = true;
+const answer = true;
 
 
 
@@ -53,8 +55,10 @@ async function main() {
     console.log("Finished Minting ETH20");
     console.log("-------------------------------------");
 
-
+    
     console.log("User1 buys tokens of both creators ");
+    console.log("-------------------------------------");
+    console.log("State Before");
     // Check State
     lastpriceC1 = await BuzzTokensContract.connect(user1).lastPrice(creator1.address);
     curveConstantC1 = await BuzzTokensContract.curveConstants(creator1.address);
@@ -80,13 +84,13 @@ async function main() {
     console.log("Creator 1 makes a market");
     const tx = await BuzzKingContract.connect(creator1).createBinary();
     const receipt = await tx.wait();
-    let market1;
+    let marketAddress;
     for (const event of receipt.events){
         if (event.event === "NewMarket"){
-            market1 = event.args[0];
+            marketAddress = event.args[0];
         }
     }
-    const market1Contract = new Contract(market1,artifacts.BUZZBINARYABI.abi,provider);
+    const market1Contract = new Contract(marketAddress,artifacts.BUZZBINARYABI.abi,provider);
     const m1Creator = await market1Contract.creator();
     const m1King = await market1Contract.king();
     const m1KValue = await market1Contract.K();
@@ -95,13 +99,12 @@ async function main() {
     console.log(`K value: ${m1KValue}`);
     console.log(`totalYesPool: ${await market1Contract.totalYesPool()}`);
     console.log(`totalNoPool: ${await market1Contract.totalNoPool()}`);
-    console.log(`Finished creating a market: ${market1}`);
+    console.log(`Finished creating a market: ${marketAddress}`);
     console.log("-------------------------------------");
 
     console.log("User1 mints yes position in creator1 market");
     console.log(`User1 balance of creatorTokens: ${await BuzzTokensContract.tokensBalance(creator1.address,user1.address)}`);
-    console.log(`Amount to Mint User1: ${utils.parseEther(user1MintAmountC1Market)}`);
-    await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address,market1Contract.address, utils.parseEther(user1MintAmountC1Market), user1MintC1MarketDirection);
+    await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address,market1Contract.address, utils.parseEther(user1MintYESAmount), user1MintC1MarketDirection);
     console.log(`User1 Creator1Token Balance: ${await BuzzTokensContract.tokensSupply(user1.address)}`);
     console.log(`User1 yesAmount: ${await market1Contract.addressBalances(user1.address)}`);
     console.log(`K value: ${await market1Contract.K()}`);
@@ -111,8 +114,7 @@ async function main() {
 
     console.log("User1 mints No position in creator1 market");
     console.log(`User1 balance of creatorTokens: ${await BuzzTokensContract.tokensBalance(creator1.address,user1.address)}`);
-    console.log(`Amount to Mint User1: ${utils.parseEther(user1MintAmountC1Market)}`);
-    await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address,market1Contract.address, utils.parseEther(user1MintAmountC1Market), false);
+    await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address,market1Contract.address, utils.parseEther(user1MintNOAmount), false);
     console.log(`User1 Creator1Token Balance: ${await BuzzTokensContract.tokensSupply(user1.address)}`);
     console.log(`User1 NoAmount: ${await market1Contract.addressBalances(user1.address)}`);
     console.log(`K value: ${await market1Contract.K()}`);
@@ -138,16 +140,6 @@ async function main() {
     console.log(`Total No Pool: ${totalNoPool} && ${utils.formatUnits(totalNoPool)}`);
     console.log(`K Value: ${K} && ${utils.formatUnits(K)}`);
     console.log("-------------------------------------");
-
-
-    // console.log("Function tests");
-    // console.log("-------------------------------------");
-    // const discrim = await market1Contract.testDiscriminate(temp[0],true);
-    // console.log(`Returned Discrim: ${discrim} && ${utils.formatUnits(discrim.toString())}`);
-    // const srqtDiscrim = await market1Contract.testSqrt(discrim);
-    // console.log(`Returned SQRT: ${srqtDiscrim} && ${utils.formatUnits(String(srqtDiscrim))}`);
-    // const zero = await market1Contract.testZero(temp[0], String(srqtDiscrim));
-    // console.log(`Returned Zero: ${zero.toString()} && ${utils.formatUnits(zero.toString())}`);
     
 
     await BuzzKingContract.connect(user1).redeemBinaryDuring(creator1.address, market1Contract.address,temp[0],true);
@@ -174,8 +166,10 @@ async function main() {
     K = await market1Contract.K();
     user1c1Balance = await BuzzTokensContract.tokensBalance(creator1.address, user1.address);
     contractC1Balance = await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address);
+    contractC1Balance = await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address);
     console.log("State Before");
     console.log("-------------------------------------");
+    console.log(`Market balance C1: ${contractC1Balance} && ${utils.formatUnits(contractC1Balance)}`);
     console.log(`market balance C1: ${contractC1Balance} && ${utils.formatUnits(contractC1Balance)}`)
     console.log(`User1 C1 Balance: ${user1c1Balance} && ${utils.formatUnits(user1c1Balance)}`);
     console.log(`user1 balance YesNo: ${temp}`);
@@ -185,7 +179,10 @@ async function main() {
     console.log("-------------------------------------");    
 
     await BuzzKingContract.connect(user1).redeemBinaryDuring(creator1.address, market1Contract.address,temp[1],false);
+    contractC1Balance = await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address);
     console.log("State After");
+    console.log("-------------------------------------");
+    console.log(`Market balance C1: ${contractC1Balance} && ${utils.formatUnits(contractC1Balance)}`);
     temp = await market1Contract.addressBalances(user1.address);
     totalYesPool = await market1Contract.totalYesPool();
     totalNoPool = await market1Contract.totalNoPool();
@@ -199,8 +196,13 @@ async function main() {
     console.log(`K Value: ${K} && ${utils.formatUnits(K)}`);
 
     // Final value submitted
-    await BuzzKingContract.connect(creator1).submitBinaryAnswer(market1Contract.address,false);
-
+    contractC1Balance = await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address);
+    console.log(`market balance C1: ${contractC1Balance} && ${utils.formatUnits(contractC1Balance)}`);
+    console.log("FINAL VALUE SUBMITTED");
+    await BuzzKingContract.connect(creator1).submitBinaryAnswer(market1Contract.address,answer);
+    contractC1Balance = await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address);
+    console.log(`market balance C1: ${contractC1Balance} && ${utils.formatUnits(contractC1Balance)}`)
+    console.log("-------------------------------------");
     // User1 Redeem Final
     temp = await market1Contract.addressBalances(user1.address);
     totalYesPool = await market1Contract.totalYesPool();
