@@ -15,7 +15,6 @@ contract BuzzKing is BuzzBinaryDeployer, Ownable, NoDelegateCall{
 
     IBuzzTokens immutable public buzzTokens;
     IETH20 immutable public ETH20;
-    // mapping(address => mapping(address=>string)) public allMarkets;
 
     event NewMarket( address buzzMarketAddress, address tokensCreator,string marketType);
     event NewMint(address buzzMarketAddress, address tokensCreator, address buzzUser, uint256 shareAmount, uint256 yesOrNoAmount, bool yesOrNo);

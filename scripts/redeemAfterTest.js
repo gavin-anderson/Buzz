@@ -1,4 +1,5 @@
 const { Contract, ContractFactory, utils } = require("ethers");
+const { formatUnits } = require("ethers/lib/utils");
 const { waffle } = require("hardhat");
 
 const artifacts = {
@@ -8,17 +9,19 @@ const artifacts = {
     BUZZBINARYABI: require("../artifacts/contracts/BuzzBinary.sol/BuzzBinary.json")
 };
 
-const protocolFeeAmount = "0.05"
-const creatorFeeAmount = "0.05"
-const user1TokenC1Buy = "35688"
-const user1MintYESAmount = "35000";
-const user1MintNOAmount = "35000";
+const protocolFeeAmount = "0.05";
+const creatorFeeAmount = "0.05";
+const user1TokenC1Buy = "35000";
+const user2TokenC1Buy = "7000";
+
+const user1MintYesNoAmount = "34000";
+const user2MintYesNoAmount = "7000";
 const user1MintC1MarketDirection = true;
-const redeemDirection = true;
+const user2MintC1MarketDirection= false;
 const answer = false;
 
 async function main() {
-    const [owner, creator1, user1, protocolfee] = await ethers.getSigners();
+    const [owner, creator1, user1, user2, protocolfee] = await ethers.getSigners();
     const provider = waffle.provider;
 
     console.log("Deploying Contracts");
@@ -53,6 +56,7 @@ async function main() {
     console.log("-------------------------------------");
     // await ETH20Contract.connect(owner).specialMint(creator1.address);
     await ETH20Contract.connect(owner).specialMint(user1.address);
+    await ETH20Contract.connect(owner).specialMint(user2.address);
     console.log("STATE AFTER");
     console.log("-------------------------------------");
     console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
@@ -85,6 +89,29 @@ async function main() {
     console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
     console.log("-------------------------------------");
 
+    console.log("User2 buys tokens Creator");
+    console.log("-------------------------------------");
+    console.log("STATE BEFORE");
+    console.log("-------------------------------------");
+    console.log(`User2 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User2 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    await BuzzTokensContract.connect(user2).buyTokens(creator1.address, utils.parseEther(user2TokenC1Buy));
+    console.log("-------------------------------------");
+    console.log("STATE AFTER");
+    console.log("-------------------------------------");
+    console.log(`User2 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User2 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
+    console.log("-------------------------------------");
+
     console.log("Creator 1 makes a Binary Market");
     console.log("-------------------------------------");
     const tx = await BuzzKingContract.connect(creator1).createBinary();
@@ -107,10 +134,11 @@ async function main() {
     console.log("-------------------------------------");
 
 
-    console.log("User1 Mints Yes Position");
+    console.log("User1 Mints YESNO Position");
     console.log("-------------------------------------");
     console.log("STATE BEFORE");
     console.log("-------------------------------------");
+    console.log(`User1 is going to buy: ${user1MintYesNoAmount} of ${user1MintC1MarketDirection?"Yes":"No"}`);
     console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
     console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
     console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
@@ -124,7 +152,7 @@ async function main() {
     console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
     console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
     console.log("-------------------------------------");
-    await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address, market1Contract.address, utils.parseEther(user1MintYESAmount), user1MintC1MarketDirection);
+    await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address, market1Contract.address, utils.parseEther(user1MintYesNoAmount), user1MintC1MarketDirection);
     console.log("STATE AFTER");
     console.log("-------------------------------------");
     console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
@@ -141,45 +169,14 @@ async function main() {
     console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
     console.log("-------------------------------------");
 
-    // console.log("User1 Mints No Position");
-    // console.log("-------------------------------------");
-    // console.log("STATE BEFORE");
-    // console.log("-------------------------------------");
-    // console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
-    // console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
-    // console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
-    // console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
-    // console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
-    // console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
-    // console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
-    // console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
-    // console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
-    // console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
-    // console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
-    // console.log("-------------------------------------");
-    // await BuzzKingContract.connect(user1).mintBinaryPosition(creator1.address, market1Contract.address, utils.parseEther(user1MintNOAmount), !user1MintC1MarketDirection);
-    // console.log("STATE AFTER");
-    // console.log("-------------------------------------");
-    // console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
-    // console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
-    // console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
-    // console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
-    // console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
-    // console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
-    // console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
-    // console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
-    // console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
-    // console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
-    // console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
-    // console.log("-------------------------------------");
-
-    console.log("User1 RedeemDuring");
+    console.log("User2 Mints YESNO Position");
     console.log("-------------------------------------");
     console.log("STATE BEFORE");
     console.log("-------------------------------------");
-    console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
-    console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
-    console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
+    console.log(`User1 is going to buy: ${user2MintYesNoAmount} of ${user2MintC1MarketDirection?"Yes":"No"}`);
+    console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[1])}`);
     console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
     console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
     console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
@@ -190,12 +187,12 @@ async function main() {
     console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
     console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
     console.log("-------------------------------------");
-    await BuzzKingContract.connect(user1).redeemBinaryDuring(creator1.address, market1Contract.address, (await market1Contract.addressBalances(user1.address))[redeemDirection ? 0 : 1], redeemDirection);
+    await BuzzKingContract.connect(user2).mintBinaryPosition(creator1.address, market1Contract.address, utils.parseEther(user2MintYesNoAmount), user2MintC1MarketDirection);
     console.log("STATE AFTER");
     console.log("-------------------------------------");
-    console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
-    console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
-    console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
+    console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[1])}`);
     console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
     console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
     console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
@@ -241,43 +238,76 @@ async function main() {
     console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
     console.log("-------------------------------------");
 
-    if (answer && (await market1Contract.addressBalances(user1.address))[0] > 0 || !answer && (await market1Contract.addressBalances(user1.address))[1] > 0) {
-        console.log("User1 Needs to RedeemAfter");
-        console.log("-------------------------------------");
-        console.log("STATE BEFORE");
-        console.log("-------------------------------------");
-        console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
-        console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
-        console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
-        console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
-        console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
-        console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
-        console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
-        console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
-        console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
-        console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
-        console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
-        console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
-        console.log("-------------------------------------");
-        await BuzzKingContract.connect(user1).redeemBinaryAfter(creator1.address, market1Contract.address);
-        console.log("STATE AFTER");
-        console.log("-------------------------------------");
-        console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
-        console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
-        console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
-        console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
-        console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
-        console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
-        console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
-        console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
-        console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
-        console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
-        console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
-        console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
-        console.log("-------------------------------------");
-    }
+    
+    console.log("User1 Runs RedeemAfter");
+    console.log("-------------------------------------");
+    console.log("STATE BEFORE");
+    console.log("-------------------------------------");
+    console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
+    console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
+    console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
+    console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
+    console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
+    console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
+    console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
+    console.log("-------------------------------------");
+    await BuzzKingContract.connect(user1).redeemBinaryAfter(creator1.address, market1Contract.address);
+    console.log("STATE AFTER");
+    console.log("-------------------------------------");
+    console.log(`User1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user1.address))}`);
+    console.log(`User1 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user1.address))}`);
+    console.log(`User1 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user1.address))[1])}`);
+    console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
+    console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
+    console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
+    console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
+    console.log("-------------------------------------");
 
-    // Then sell into ETH20
+    console.log("User2 Runs RedeemAfter");
+    console.log("-------------------------------------");
+    console.log("STATE BEFORE");
+    console.log("-------------------------------------");
+    console.log(`User2 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User2 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`User2 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[1])}`);
+    console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
+    console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
+    console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
+    console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
+    console.log("-------------------------------------");
+    await BuzzKingContract.connect(user2).redeemBinaryAfter(creator1.address, market1Contract.address);
+    console.log("STATE AFTER");
+    console.log("-------------------------------------");
+    console.log(`User2 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User2 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`User2 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[1])}`);
+    console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
+    console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
+    console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
+    console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
+    console.log("-------------------------------------");
+    
+    if(await BuzzTokensContract.tokensBalance(creator1.address, user1.address)>0){
     console.log("User1 Sells Tokens");
     console.log("-------------------------------------");
     console.log("STATE BEFORE");
@@ -295,18 +325,7 @@ async function main() {
     console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
     console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
     console.log("-------------------------------------");
-
-    const userBalance = await BuzzTokensContract.tokensBalance(creator1.address, user1.address);
-    const amountToRedeem = userBalance.sub(1)
-    const supply = await BuzzTokensContract.tokensSupply(creator1.address);
-    const curveConstant = await BuzzTokensContract.curveConstants(creator1.address);
-
-    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
-    console.log(`supply: ${supply}`);
-    console.log(amountToRedeem);
-    const sellCost = await BuzzTokensContract.connect(user1).getPrice(supply-amountToRedeem, amountToRedeem,curveConstant);
-    console.log(sellCost);
-    await BuzzTokensContract.connect(user1).sellTokens(creator1.address, amountToRedeem);
+    await BuzzTokensContract.connect(user1).sellTokens(creator1.address, await BuzzTokensContract.tokensBalance(creator1.address, user1.address));
     console.log("-------------------------------------");
     console.log("STATE AFTER");
     console.log("-------------------------------------");
@@ -322,6 +341,47 @@ async function main() {
     console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
     console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
     console.log("-------------------------------------");
+    }
+
+
+    if(await BuzzTokensContract.tokensBalance(creator1.address, user2.address)>0){
+        console.log("User2 Sells Tokens");
+    console.log("-------------------------------------");
+    console.log("STATE BEFORE");
+    console.log("-------------------------------------");
+    console.log(`User2 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User2 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`User2 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[1])}`);
+    console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
+    console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
+    console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
+    console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log(`curveConstant: ${await BuzzTokensContract.curveConstants(creator1.address)}`);
+    console.log("-------------------------------------");
+    await BuzzTokensContract.connect(user2).sellTokens(creator1.address, await BuzzTokensContract.tokensBalance(creator1.address, user2.address));
+    console.log("-------------------------------------");
+    console.log("STATE AFTER");
+    console.log("-------------------------------------");
+    console.log(`User2 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(user2.address))}`);
+    console.log(`User2 Token Balance of Creator1: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, user2.address))}`);
+    console.log(`User2 Position Balance: YESAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[0])} && NOAMOUNT: ${utils.formatUnits((await market1Contract.addressBalances(user2.address))[1])}`);
+    console.log(`Binary Market Token Balance: ${utils.formatUnits(await BuzzTokensContract.tokensBalance(creator1.address, market1Contract.address))}`);
+    console.log(`TotalYesPool: ${utils.formatUnits(await market1Contract.totalYesPool())}`);
+    console.log(`TotalNoPool: ${utils.formatUnits(await market1Contract.totalNoPool())}`);
+    console.log(`K value: ${utils.formatUnits(await market1Contract.K())}`);
+    console.log(`Total Supply of Creator1 Tokens: ${utils.formatUnits(await BuzzTokensContract.tokensSupply(creator1.address))}`);
+    console.log(`ProtocolFee ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(protocolfee.address))}`);
+    console.log(`Creator1 ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(creator1.address))}`);
+    console.log(`BuzzTokens ETH20 Balance: ${utils.formatUnits(await ETH20Contract.balanceOf(BuzzTokensContract.address))}`);
+    console.log("-------------------------------------");
+    }
+    
+    
+    
 }
 main()
     .then(() => process.exit(0))
