@@ -1,6 +1,20 @@
 import NavLayout from "@/app/buzz-components/NavLayout";
+import { usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/router";
+import { ReactNode, useEffect } from "react";
 
-const MainContainer = ({ children }) => {
+interface MainContainerProps {
+  children: ReactNode;
+}
+
+const MainContainer: React.FC<MainContainerProps> = ({ children }) => {
+  const { ready, authenticated, user } = usePrivy();
+  const router = useRouter();
+  useEffect(() => {
+    if (ready && !authenticated) {
+      router.push("/");
+    }
+  }, [ready, authenticated, router]);
   return (
     <NavLayout>
       <div className="flex flex-1   ">

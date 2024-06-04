@@ -6,15 +6,20 @@ import {
   Button,
   Tooltip,
   Navbar,
-  Hero,
   Dropdown,
   Footer,
   Card,
 } from "flowbite-react";
 import type { FC } from "react";
 import { signIn, useSession } from "next-auth/react";
+import { FaArrowRight } from "react-icons/fa";
+import Link from "next/link";
 
-const LandingPage: FC = function () {
+interface LandingPageProps {
+  login: () => void;
+}
+
+const LandingPage: React.FC<LandingPageProps> = ({ login }) => {
   return (
     <div
       className="relative min-h-screen flex justify-center items-center p-4"
@@ -34,31 +39,36 @@ const LandingPage: FC = function () {
 
         <div className="mt-5 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-fuchsia-950">
-            Invest in creators and{" "}
+            Buy your friends' tokens{" "}
             <span className="bg-clip-text text-transparent bg-gradient-to-tl from-fuchsia-400 to-fuchsia-600">
-              play in their markets
+              and bet on their lives.
             </span>
           </h1>
         </div>
 
         <div className="mt-5 text-center shadow-md rounded-3xl p-6">
           <p className="text-lg md:text-xl text-gray-600 dark:text-neutral-400">
-            Every action is a market. From daily routines to viral trends, shape
-            investments with your life's events. Bet on outcomes, turn insights
-            into gains, and engage deeply with the creator economy.
+            The SocialFi platform with unlimited upside.
           </p>
         </div>
 
         <div className="mt-8 gap-3 flex justify-center">
-          {/* <a
-            className="inline-flex justify-center items-center gap-x-3 text-center bg-gradient-to-tl from-blue-600 to-violet-600 hover:from-violet-600 hover:to-blue-600 border border-transparent text-white text-base font-medium rounded-md py-4 px-6"
-            href="#"
+          {/* <Link
+            target="_blank"
+            href="https://app.deform.cc/form/ea966a9d-750c-4758-8dc3-a924ccd14f68"
           >
-            Sign In With Google
-          </a> */}
+            <button
+              type="button"
+              className="inline-flex justify-center items-center shadow-xl gap-x-3 text-center bg-gradient-to-tl from-fuchsia-400 to-fuchsia-600 hover:from-fuchsia-800 hover:to-fuchsia-900 border border-transparent text-white text-base font-medium rounded-full py-4 px-6"
+            >
+              Join the Waitlist
+              <FaArrowRight></FaArrowRight>
+            </button>
+          </Link> */}
+
           <button
             type="button"
-            onClick={() => signIn("google")}
+            onClick={login}
             className="inline-flex justify-center items-center gap-x-3 text-center bg-gradient-to-tl from-fuchsia-400 to-fuchsia-600 hover:from-fuchsia-800 hover:to-fuchsia-900 border border-transparent text-white text-base font-medium rounded-full py-4 px-6"
           >
             <img

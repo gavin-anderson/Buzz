@@ -1,3 +1,31 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@media (max-width: 1024px) {
+  .sidebar-text {
+    display: none; /* Hide text labels on smaller screens */
+  }
+  .sidebar-icon {
+    margin: 0 auto; /* Center icons when text labels are not present */
+  }
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #fae8ff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 50;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3); /* horizontal offset, vertical offset, blur radius, color */
+  }
+  .sidebar {
+    display: none; /* Hide sidebar on very small screens */
+  }
+}
