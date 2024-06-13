@@ -1,25 +1,20 @@
-// pages/_app.tsx
-import RootLayout from "../app/layout"; // Make sure this path is correct based on your directory structure
-import { PrivyProvider } from "@privy-io/react-auth";
+import RootLayout from "../app/layout"; // Ensure the path is correct based on your directory structure
+import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/router";
 import { AppProps } from "next/app";
+import SessionHandler from "@/app/buzz-components/SessionHandler";
 import Head from "next/head";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
+
   return (
     <>
       <Head>
         <title>BuzzMarkets</title>
-        <meta
-          name="description"
-          content="The SocialFi platform with unlimited upside."
-        />
+        <meta name="description" content="The SocialFi platform with unlimited upside." />
         <meta property="og:title" content="BuzzMarkets" />
-        <meta
-          property="og:description"
-          content="The SocialFi platform with unlimited upside."
-        />
+        <meta property="og:description" content="The SocialFi platform with unlimited upside." />
         <meta property="og:image" content="landing.png" />
         <meta property="og:url" content="https://www.buzzmarkets.io/" />
       </Head>
@@ -27,12 +22,15 @@ function MyApp({ Component, pageProps }: AppProps) {
         appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ""}
         config={{
           embeddedWallets: {
-            createOnLogin: "users-without-wallets", // defaults to 'off'
+            createOnLogin: "users-without-wallets",  // Ensure this is correctly configured
           },
         }}
-        onSuccess={() => router.push("/home")}
+        onSuccess={() => {
+          router.push("/home");
+        }}
       >
         <RootLayout>
+          <SessionHandler/>
           <Component {...pageProps} />
         </RootLayout>
       </PrivyProvider>

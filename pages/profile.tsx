@@ -5,6 +5,7 @@ import {
   FaWallet,
   FaUsers,
   FaCog,
+  FaPlus,
 } from "react-icons/fa";
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
@@ -12,10 +13,10 @@ import { FaRegClock } from "react-icons/fa6";
 import TransactionCard from "@/app/buzz-components/profile-tabs/transactions/TransactionCard";
 import HoldersTable from "@/app/buzz-components/profile-tabs/holders/HoldersTable";
 import NewMarketCard from "@/app/buzz-components/profile-tabs/markets/NewMarketCard";
+import HoldingsTable from "@/app/buzz-components/profile-tabs/holdings/HoldingsTable";
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("markets");
   const { user } = usePrivy();
-  console.log(user, "User Data");
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
@@ -40,19 +41,20 @@ const Profile = () => {
               />
               <div className="text-center md:text-left">
                 <h2 className="text-sm md:text-lg font-bold text-gray-900">
-                  Malcolm
+                  {user.google.name}
                 </h2>
+                {/* CONVERT THIS TO USERNMAAME */}
                 <p className="text-xs md:text-base text-gray-500">@malcolm</p>
                 <div className="flex justify-center md:justify-start space-x-2 md:space-x-4 mt-1 md:mt-4">
                   <div className="text-center">
                     <p className="text-xs md:text-lg font-semibold text-gray-900">
-                      12
+                      2
                     </p>
                     <p className="text-xs text-gray-600">Holding</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs md:text-lg font-semibold text-gray-900">
-                      117
+                      10
                     </p>
                     <p className="text-xs text-gray-600">Holders</p>
                   </div>
@@ -65,11 +67,9 @@ const Profile = () => {
               </button>
               <div className="text-center md:text-right mt-2 md:mt-4">
                 <p className="text-sm md:text-lg font-semibold text-gray-900">
-                  $1.87
+                  $0.87
                 </p>
-                <p className="text-xs md:text-sm text-gray-600">
-                  $111.87 Earned
-                </p>
+                <p className="text-xs md:text-sm text-gray-600">$5.37 Earned</p>
               </div>
             </div>
           </div>
@@ -114,6 +114,11 @@ const Profile = () => {
                   className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800"
                   role="tabpanel"
                 >
+                  <div className="flex justify-end mb-4">
+                    <button className="flex items-center p-1 bg-fuchsia-800 hover:bg-fuchsia-900 rounded-xl text-white">
+                      <FaPlus className="text-light" />
+                    </button>
+                  </div>
                   <NewMarketCard></NewMarketCard>
                 </div>
               )}
@@ -131,7 +136,7 @@ const Profile = () => {
                   role="tabpanel"
                 >
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Placeholder content for Holdings.
+                    <HoldingsTable></HoldingsTable>
                   </p>
                 </div>
               )}

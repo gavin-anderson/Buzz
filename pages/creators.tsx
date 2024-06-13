@@ -1,18 +1,47 @@
 import MainContainer from "@/app/buzz-components/MainContainer";
-import { FaFire, FaRegClock } from "react-icons/fa"; // Import icons for Popular and New
-import { useState } from "react";
+import { FaBolt, FaChartLine, FaFire, FaGem, FaRegClock } from "react-icons/fa"; // Import icons for Popular and New
+import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import PopularCreatorsTable from "@/app/buzz-components/creator-tabs/PopularCreatorsTable";
 import HoldersTable from "@/app/buzz-components/profile-tabs/holders/HoldersTable";
 
+interface UserData {
+  username: string;
+  profileName: string;
+  tokenPrice: string;
+  holders: number;
+  markets: number;
+  "24h": string;
+  "7d": string;
+  created: string;
+  avatarUrl: string; // Ensure this field is included in your API response or handle it accordingly
+}
+
 const Creators = () => {
   const [activeTab, setActiveTab] = useState("popular"); // Default active tab
+  const [tableData, setTableData] = useState<UserData[]>([]);
   const { user } = usePrivy();
-  console.log(user, "User Data");
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };
+  useEffect(() => {
+    console.log("ATTEMPOTTT")
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/popular-creators');
+        if (!response.ok) {
+          throw new Error('Network response was not ok: ' + response.statusText);
+        }
+        const data = await response.json();
+        setTableData(data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
   return (
     <MainContainer>
@@ -28,6 +57,9 @@ const Creators = () => {
                 {[
                   { name: "Popular", icon: FaFire },
                   { name: "New", icon: FaRegClock },
+                  { name: "Active", icon: FaBolt },
+                  { name: "Coveted", icon: FaGem },
+                  { name: "Gainers", icon: FaChartLine },
                 ].map(({ name, icon: Icon }) => (
                   <li className="flex-1 min-w-0" role="presentation" key={name}>
                     <button
@@ -55,7 +87,7 @@ const Creators = () => {
                   className="p-4 rounded-lg bg-gray-50 dark:bg-gray-800"
                   role="tabpanel"
                 >
-                  <PopularCreatorsTable />
+                  <PopularCreatorsTable tableData={tableData} />
                   {/* Placeholder for Popular content */}
                 </div>
               )}

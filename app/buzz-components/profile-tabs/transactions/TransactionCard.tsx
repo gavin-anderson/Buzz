@@ -3,21 +3,20 @@ import { FaRegClock } from "react-icons/fa";
 const BettingCard = () => {
   const cardsData = [
     {
-      username: "@ronnie_stylll",
-      isExpired: { status: false, timeRemaining: "Expires in 1d 2h 10min" },
-      question:
-        "Going on a date this weekend, am I going to be able to secure a second date?",
+      username: "@ansem",
+      isExpired: { status: true },
+      question: "How long will the podcast with goodGame last?",
       details: {
         tokenPrice: "1.43",
         stake: "12.5",
-        potentialReturn: "30.2",
-        selection: "No Shot",
+        potentialReturn: "25",
+        selection: "Over 1 hour",
       },
-      cashOut: "27.2",
+      cashOut: "25",
     },
     {
       username: "@jane_doe",
-      isExpired: { status: true },
+      isExpired: { status: true, timeRemaining: "Expired in 1d 2h 10min" },
       question: "Will it rain tomorrow in Toronto?",
       details: {
         tokenPrice: "0.85",

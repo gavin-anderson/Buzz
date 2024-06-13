@@ -18,6 +18,7 @@ import {
 import { useRouter } from "next/router";
 import { Button, Modal } from "flowbite-react";
 import { usePrivy } from "@privy-io/react-auth";
+import CreateMarketModal from "./modals/CreateMarketModal";
 
 const Sidebar = ({}) => {
   const router = useRouter();
@@ -44,6 +45,7 @@ const Sidebar = ({}) => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isOpenCreateModal, setOpenCreateModal] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -138,7 +140,7 @@ const Sidebar = ({}) => {
       {/* Sidebar element with conditional CSS for translation */}
       {!isBottomNavVisible && (
         <aside
-          className={`fixed top-0 left-0 z-40 h-screen shadow-xl  bg-white border-r border-gray-50 dark:bg-fuchsia-950 dark:border-fuchsia-700 transition-transform ${
+          className={`fixed top-0 left-0  h-screen shadow-xl  bg-white border-r border-gray-50 dark:bg-fuchsia-950 dark:border-fuchsia-700 transition-transform ${
             isSidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
           style={{ width: "300px" }}
@@ -147,7 +149,7 @@ const Sidebar = ({}) => {
           <div className="px-3 py-3">
             <a href="/" className="flex items-center space-x-3">
               <img src="/buzz.png" alt="BuzzMarkets Logo" className="h-20" />
-              <span className="self-center text-2xl font-semibold whitespace-nowrap text-fuchsia-900 hidden lg:block">
+              <span className="self-center text-2xl font-semibold whitespace-nowrap text-gray-950 hidden lg:block">
                 BuzzMarkets
               </span>
             </a>
@@ -157,7 +159,7 @@ const Sidebar = ({}) => {
               <ul className="space-y-2 font-medium">
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${
                       router.pathname === "/home"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
@@ -170,7 +172,7 @@ const Sidebar = ({}) => {
                 </li>
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${
                       router.pathname === "/notifications"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
@@ -183,7 +185,7 @@ const Sidebar = ({}) => {
                 </li>
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${
                       router.pathname === "/creators"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
@@ -196,7 +198,7 @@ const Sidebar = ({}) => {
                 </li>
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group mb-3 ${
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group mb-3 ${
                       router.pathname === "/profile"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
@@ -208,24 +210,20 @@ const Sidebar = ({}) => {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    className={`flex items-center justify-center text-lg  p-4 rounded-3xl text-white   group ${
-                      router.pathname === "/create"
-                        ? "bg-fuchsia-800 hover:bg-fuchsia-700 text-white "
-                        : "hover:bg-fuchsia-700 bg-fuchsia-800 text-white"
-                    }`}
-                    href="/create"
+                  <button
+                    onClick={() => setOpenCreateModal(true)}
+                    className="flex w-full items-center justify-center text-lg p-4 rounded-3xl text-white bg-fuchsia-800 hover:bg-fuchsia-900 group"
                   >
-                    <FaPlusSquare size={"20px"} className="mr-3" />
+                    <FaPlusSquare size="20px" className="mr-3" />
                     <span>Create</span>
-                  </Link>
+                  </button>
                 </li>
               </ul>
               {/* Dropdown menu for additional options */}
-              <div className="absolute bottom-14 text-lg p-4 w-full flex pr-12 justify-center">
+              <div className="absolute bottom-14 text-lg  w-full flex pr-12 justify-center">
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center justify-center border-2 border-fuchsia-800 hover:bg-fuchsia-800 hover:text-white bg-transparent text-gray-900 rounded-3xl shadow-sm px-4 py-2 min-w-fit z-10"
+                  className="flex items-center justify-center text-lg w-11/12  p-4 border-2 border-fuchsia-800 hover:bg-fuchsia-800 hover:text-white bg-transparent text-gray-900 rounded-3xl shadow-sm  z-10"
                 >
                   {isDropdownOpen
                     ? "Close"
@@ -310,6 +308,10 @@ const Sidebar = ({}) => {
           </Modal.Body>
         </Modal>
       )}
+      <CreateMarketModal
+        isOpenCreateModal={isOpenCreateModal}
+        setOpenCreateModal={setOpenCreateModal}
+      ></CreateMarketModal>
     </>
   );
 };

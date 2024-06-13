@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./SideBar";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/router";
+import SearchUsers from "./right-pane/SearchUsers";
 
 type NavLayoutProps = {
   children: ReactNode;
@@ -53,6 +54,7 @@ const NavLayout = ({ children }: NavLayoutProps) => {
               className="border-l border-gray-50 shadow-xl"
             >
               {/* Right pane content goes here */}
+              <SearchUsers></SearchUsers>
             </div>
           </div>
         </>
