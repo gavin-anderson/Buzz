@@ -25,5 +25,6 @@ export const marketSchema = Joi.object({
   isReportedValue: Joi.boolean().default(false),
   claimed: Joi.number().min(0).default(0),
   unclaimed: Joi.number().min(0).default(0),
+  createdAt: Joi.date().required(),
   comments: Joi.array().items(commentSchema).required(),
 });

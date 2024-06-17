@@ -7,20 +7,65 @@ import {
   FaCog,
   FaPlus,
 } from "react-icons/fa";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import {useUser} from '../contexts/UserContext';
 import { FaRegClock } from "react-icons/fa6";
 import TransactionCard from "@/app/buzz-components/profile-tabs/transactions/TransactionCard";
 import HoldersTable from "@/app/buzz-components/profile-tabs/holders/HoldersTable";
-import NewMarketCard from "@/app/buzz-components/profile-tabs/markets/NewMarketCard";
+import PersonalMarketsCard from "@/app/buzz-components/profile-tabs/markets/PersonalMarketsCard";
 import HoldingsTable from "@/app/buzz-components/profile-tabs/holdings/HoldingsTable";
+
+interface UsersMarketData{
+  postMessage:string;
+  option1: string;
+  option2:string;
+  totalComments:number;
+  totalVolume:number;
+  totalBettors:number;
+  isSettled: boolean;
+  settledAt: string;
+  settleMessage: string;
+  postedAgo:string;
+  comments: string[];
+}
+
+
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("markets");
+  const [usersMarketData, setUsersMarketData] = useState<UsersMarketData[]>([]);
   const { user } = usePrivy();
-
+  const userInfo = useUser();
+  console.log(`USERINFO: ${userInfo}`);
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+        if (!user || !user.wallet) {
+            console.error("No user wallet address found");
+            return;
+        }
+
+        const queryString = new URLSearchParams({ userAddress: user.wallet.address }).toString();
+        const apiUrl = `/api/get-user-created-markets?${queryString}`;
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            const data = await response.json();
+            console.log("fontend returned data",data);
+            setUsersMarketData(data);
+        } catch (error) {
+            console.error('Error fetching market data:', error);
+        }
+    };
+
+    fetchData();
+}, [user]);
 
   return (
     <MainContainer>
@@ -41,20 +86,20 @@ const Profile = () => {
               />
               <div className="text-center md:text-left">
                 <h2 className="text-sm md:text-lg font-bold text-gray-900">
-                  {user.google.name}
+                  {userInfo?.profileName}
                 </h2>
                 {/* CONVERT THIS TO USERNMAAME */}
-                <p className="text-xs md:text-base text-gray-500">@malcolm</p>
+                <p className="text-xs md:text-base text-gray-500">{userInfo?.username}</p>
                 <div className="flex justify-center md:justify-start space-x-2 md:space-x-4 mt-1 md:mt-4">
                   <div className="text-center">
                     <p className="text-xs md:text-lg font-semibold text-gray-900">
-                      2
+                      {userInfo?.tokensOwned.length}
                     </p>
                     <p className="text-xs text-gray-600">Holding</p>
                   </div>
                   <div className="text-center">
                     <p className="text-xs md:text-lg font-semibold text-gray-900">
-                      10
+                      {userInfo?.tokenDetails.tokenHolders.length}
                     </p>
                     <p className="text-xs text-gray-600">Holders</p>
                   </div>
@@ -67,9 +112,9 @@ const Profile = () => {
               </button>
               <div className="text-center md:text-right mt-2 md:mt-4">
                 <p className="text-sm md:text-lg font-semibold text-gray-900">
-                  $0.87
+                  ${userInfo?.tokenDetails.priceUSD}
                 </p>
-                <p className="text-xs md:text-sm text-gray-600">$5.37 Earned</p>
+                <p className="text-xs md:text-sm text-gray-600">${userInfo?.tokenDetails.totalUserFees} Earned</p>
               </div>
             </div>
           </div>
@@ -119,7 +164,7 @@ const Profile = () => {
                       <FaPlus className="text-light" />
                     </button>
                   </div>
-                  <NewMarketCard></NewMarketCard>
+                  <PersonalMarketsCard usersMarketData={usersMarketData}/>
                 </div>
               )}
               {activeTab === "transactions" && (

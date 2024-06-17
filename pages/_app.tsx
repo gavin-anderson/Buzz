@@ -1,5 +1,6 @@
 import RootLayout from "../app/layout"; // Ensure the path is correct based on your directory structure
 import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
+import {UserProvider} from "../contexts/UserContext"
 import { useRouter } from "next/router";
 import { AppProps } from "next/app";
 import SessionHandler from "@/app/buzz-components/SessionHandler";
@@ -29,10 +30,12 @@ function MyApp({ Component, pageProps }: AppProps) {
           router.push("/home");
         }}
       >
-        <RootLayout>
-          <SessionHandler/>
-          <Component {...pageProps} />
-        </RootLayout>
+        <UserProvider>
+          <RootLayout>
+            <SessionHandler/>
+            <Component {...pageProps} />
+          </RootLayout>
+        </UserProvider>
       </PrivyProvider>
     </>
   );

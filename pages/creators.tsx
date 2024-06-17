@@ -25,8 +25,8 @@ const Creators = () => {
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };
+  
   useEffect(() => {
-    console.log("ATTEMPOTTT")
     const fetchData = async () => {
       try {
         const response = await fetch('/api/popular-creators');

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaUpload } from "react-icons/fa";
 
-const CreateMarketPreview = ({ marketInfo, handleChange }) => {
+const CreateMarketPreview = ({marketInfo}) => {
   return (
     <div className="border border-gray-200 shadow rounded-3xl p-4 max-w-full space-y-4">
       <h3 className="text-xl font-medium text-gray-900 dark:text-white">
@@ -13,7 +13,7 @@ const CreateMarketPreview = ({ marketInfo, handleChange }) => {
         placeholder="What are your holders betting on?"
         name="title"
         value={marketInfo.title}
-        onChange={handleChange}
+        
       />
       {marketInfo.title && (
         <>
@@ -23,7 +23,7 @@ const CreateMarketPreview = ({ marketInfo, handleChange }) => {
             placeholder="Option 1"
             name="option1"
             value={marketInfo.option1}
-            onChange={handleChange}
+            
           />
           <input
             type="text"
@@ -31,7 +31,7 @@ const CreateMarketPreview = ({ marketInfo, handleChange }) => {
             placeholder="Option 2"
             name="option2"
             value={marketInfo.option2}
-            onChange={handleChange}
+            
           />
           <div className="flex flex-col p-4 bg-fuchsia-50 rounded-3xl">
             <label className="text-sm font-medium text-gray-900 dark:text-white mb-4">
@@ -47,7 +47,7 @@ const CreateMarketPreview = ({ marketInfo, handleChange }) => {
                   className="w-full px-2 py-1 border border-gray-300 rounded-3xl"
                   name="days"
                   value={marketInfo.days}
-                  onChange={handleChange}
+                  
                 />
               </div>
               <div className="flex-1">
@@ -59,7 +59,7 @@ const CreateMarketPreview = ({ marketInfo, handleChange }) => {
                   className="w-full px-3 py-1 text-center border border-gray-300 rounded-3xl"
                   name="hours"
                   value={marketInfo.hours}
-                  onChange={handleChange}
+                  
                 />
               </div>
               <div className="flex-1">
@@ -71,7 +71,7 @@ const CreateMarketPreview = ({ marketInfo, handleChange }) => {
                   className="w-full px-2 py-1 border border-gray-300 rounded-3xl"
                   name="minutes"
                   value={marketInfo.minutes}
-                  onChange={handleChange}
+                  
                 />
               </div>
             </div>

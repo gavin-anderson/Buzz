@@ -11,8 +11,8 @@ function SessionHandler() {
         if (user && user.wallet && (user.email || user.google)) {
             try {
                 const _email = user.email?.address ?? user.google?.email;
-                const _profileName = user.google?.name || _email.split('@')[0];
-                const _username = "@" + _profileName.replace(/\s+/g, '_');
+                const _profileName = user.google?.name || _email?.split('@')[0];
+                const _username = "@" + _profileName?.replace(/\s+/g, '_');
 
                 const response = await fetch('/api/create-user', {
                     method: 'POST',

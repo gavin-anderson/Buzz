@@ -2,7 +2,7 @@ import MainContainer from "@/app/buzz-components/MainContainer";
 import { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/router";
-import NewMarketCard from "@/app/buzz-components/profile-tabs/markets/NewMarketCard";
+import PersonalMarketsCard from "@/app/buzz-components/profile-tabs/markets/PersonalMarketsCard";
 
 const Home = () => {
   const { ready, authenticated, user } = usePrivy();
@@ -16,7 +16,7 @@ const Home = () => {
   return (
     <MainContainer>
       <div className="w-full max-w-4xl mt-5">
-        <NewMarketCard></NewMarketCard>
+        {/* <PersonalMarketsCard></PersonalMarketsCard> */}
       </div>
     </MainContainer>
   );

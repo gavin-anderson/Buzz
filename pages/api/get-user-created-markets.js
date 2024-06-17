@@ -1,40 +1,30 @@
-// Import necessary functions and schema
+
 import { connectToDatabase } from '../../lib/mongodb';
 
-async function getMarkets(req, res) {
+async function getUserCreatedMarkets(req, res) {
     if (!req.query.userAddress) {
         return res.status(400).json({ message: "User address is required" });
     }
 
     try {
         const { db } = await connectToDatabase();
-        // First, find the user by wallet address to get their tokensOwned
-        console.log("UserAddress from privy",req.query.userAddress);
-        const user = await db.collection('users').findOne({ walletAddress: req.query.userAddress });
-        console.log(`User Found: ${JSON.stringify(user)}`);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Extract tokenIds that the user owns
-        const tokenIds = user.tokensOwned.map(token => Object.keys(token)[0]).filter(tokenId => tokenId !== null);
-        console.log("Tokens held ", tokenIds);
-        // Now, query the markets where creatorAddress is in user's tokenIds and isSettled is false
+        
         const markets = await db.collection('markets').find({
-            creatorAddress: { $in: tokenIds },
-            isSettled: false
+            creatorAddress: req.query.userAddress
         }).toArray();
-        console.log(`Markets Found: ${JSON.stringify(markets)}`);
-        // Map the data to fit the MarketsData interface
+
         const result = markets.map(market => ({
-            username: user.username, // Assuming username is same for all markets
             postMessage: market.postMessage,
             option1: market.options[0].A, // Assuming there's always two options
             option2: market.options[0].B,
             totalComments: market.totalComments,
             totalVolume: market.totalVolume,
             totalBettors: market.totalBettors,
-            postedAgo: calculateTimeAgo(market.createdAt)
+            isSettled: market.isSettled,
+            settledAt: market.settledAt,
+            settleMessage: market.settleMessage,
+            postedAgo: calculateTimeAgo(market.createdAt),
+            comments: market.comments
         }));
 
         res.status(200).json(result);
@@ -62,4 +52,4 @@ function calculateTimeAgo(createdAt) {
     }
 }
 
-export default getMarkets;
+export default getUserCreatedMarkets;
