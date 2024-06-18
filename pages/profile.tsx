@@ -53,7 +53,7 @@ const Profile = () => {
       return;
     }
     const queryString = new URLSearchParams({ userAddress: user.wallet.address }).toString();
-    const apiUrl = `/api/get-user-created-markets?${queryString}`;
+    const apiUrl = `/api/profile/get-user-created-markets?${queryString}`;
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {
@@ -68,7 +68,7 @@ const Profile = () => {
 
   const fetchTokenDetails = async (tokenIds: string[]) => {
     const queryString = new URLSearchParams({ tokenIds: tokenIds.join(',') }).toString();
-    const apiUrl = `/api/get-profile-holdings?${queryString}`;
+    const apiUrl = `/api/profile/get-profile-holdings?${queryString}`;
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {

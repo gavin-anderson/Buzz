@@ -1,4 +1,4 @@
-import { connectToDatabase } from '../../lib/mongodb';
+import { connectToDatabase } from '../../../lib/mongodb';
 
 async function getProfileHoldings(req, res) {
     if (req.method !== 'GET') {
