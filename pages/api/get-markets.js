@@ -9,22 +9,18 @@ async function getMarkets(req, res) {
     try {
         const { db } = await connectToDatabase();
         // First, find the user by wallet address to get their tokensOwned
-        console.log("UserAddress from privy",req.query.userAddress);
         const user = await db.collection('users').findOne({ walletAddress: req.query.userAddress });
-        console.log(`User Found: ${JSON.stringify(user)}`);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
         // Extract tokenIds that the user owns
         const tokenIds = user.tokensOwned.map(token => Object.keys(token)[0]).filter(tokenId => tokenId !== null);
-        console.log("Tokens held ", tokenIds);
         // Now, query the markets where creatorAddress is in user's tokenIds and isSettled is false
         const markets = await db.collection('markets').find({
             creatorAddress: { $in: tokenIds },
             isSettled: false
         }).toArray();
-        console.log(`Markets Found: ${JSON.stringify(markets)}`);
         // Map the data to fit the MarketsData interface
         const result = markets.map(market => ({
             username: user.username, // Assuming username is same for all markets

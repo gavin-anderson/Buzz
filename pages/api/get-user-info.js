@@ -44,7 +44,6 @@ async function getUserInfo(req, res) {
                 }
             }
         };
-        console.log("BACKEND:",result)
         res.status(200).json(result);
     } catch (error) {
         console.error('Error accessing database:', error);

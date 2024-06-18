@@ -29,43 +29,70 @@ interface UsersMarketData{
   postedAgo:string;
   comments: string[];
 }
-
+interface UserHoldings{
+  username:string;
+  tokenId:string;
+  priceEth:string;
+  priceUSD:string;
+  volume:number;
+}
 
 const Profile = () => {
   const [activeTab, setActiveTab] = useState("markets");
   const [usersMarketData, setUsersMarketData] = useState<UsersMarketData[]>([]);
+  const [holdingDetails, setHoldingDetails] = useState<UserHoldings[]>([]);
   const { user } = usePrivy();
   const userInfo = useUser();
-  console.log(`USERINFO: ${userInfo}`);
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };
 
+  const fetchUserMarketData = async () => {
+    if (!user || !user.wallet) {
+      console.error("No user wallet address found");
+      return;
+    }
+    const queryString = new URLSearchParams({ userAddress: user.wallet.address }).toString();
+    const apiUrl = `/api/get-user-created-markets?${queryString}`;
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Network response was not ok: ' + response.statusText);
+      }
+      const data = await response.json();
+      setUsersMarketData(data);
+    } catch (error) {
+      console.error('Error fetching market data:', error);
+    }
+  };
+
+  const fetchTokenDetails = async (tokenIds: string[]) => {
+    const queryString = new URLSearchParams({ tokenIds: tokenIds.join(',') }).toString();
+    const apiUrl = `/api/get-profile-holdings?${queryString}`;
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Network response was not ok: ' + response.statusText);
+      }
+      const data = await response.json();
+      setHoldingDetails(data);
+    } catch (error) {
+      console.error('Error fetching token details:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-        if (!user || !user.wallet) {
-            console.error("No user wallet address found");
-            return;
-        }
-
-        const queryString = new URLSearchParams({ userAddress: user.wallet.address }).toString();
-        const apiUrl = `/api/get-user-created-markets?${queryString}`;
-
-        try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            const data = await response.json();
-            console.log("fontend returned data",data);
-            setUsersMarketData(data);
-        } catch (error) {
-            console.error('Error fetching market data:', error);
-        }
-    };
-
-    fetchData();
-}, [user]);
+    fetchUserMarketData();
+    if (userInfo?.tokensOwned?.array) {
+      // Extract token IDs from the objects in the array
+      const tokenIds = userInfo.tokensOwned.array.flatMap(tokenObject =>
+        Object.keys(tokenObject)
+      ).filter(id => id); // Ensure there are no undefined or empty ids
+      if (tokenIds.length > 0) {
+        fetchTokenDetails(tokenIds);
+      }
+    }
+  }, [user, userInfo?.tokensOwned]);
 
   return (
     <MainContainer>
@@ -88,7 +115,6 @@ const Profile = () => {
                 <h2 className="text-sm md:text-lg font-bold text-gray-900">
                   {userInfo?.profileName}
                 </h2>
-                {/* CONVERT THIS TO USERNMAAME */}
                 <p className="text-xs md:text-base text-gray-500">{userInfo?.username}</p>
                 <div className="flex justify-center md:justify-start space-x-2 md:space-x-4 mt-1 md:mt-4">
                   <div className="text-center">
@@ -181,7 +207,7 @@ const Profile = () => {
                   role="tabpanel"
                 >
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    <HoldingsTable></HoldingsTable>
+                    <HoldingsTable holdingDetails = {holdingDetails}></HoldingsTable>
                   </p>
                 </div>
               )}

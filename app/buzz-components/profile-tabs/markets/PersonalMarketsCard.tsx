@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
+  FaRegClock,
   FaUser,
   FaRegUser,
   FaComment,
@@ -7,6 +8,8 @@ import {
   FaChartBar,
   FaRegChartBar,
 } from "react-icons/fa";
+
+import SettleMarketModal from "../../modals/SettleMarketModal";
 import CreateMarketPreview from "./CreateMarketPreview";
 import { useRouter } from "next/router";
 import { usePrivy } from "@privy-io/react-auth";
@@ -35,27 +38,37 @@ const PersonalMarketsCard = ({ usersMarketData }: NewMarketCardProps) => {
   const { user } = usePrivy();
   const userInfo = useUser();
   const isProfile = router.pathname === "/profile";
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isOpenComments, setIsOpenComments] = useState(false);
+  const [isOpenVolume, setIsOpenVolume] = useState(false);
+  const [isOpenBettor, setIsOpenBettor] = useState(false);
+  const [selectedMarketOptions, setSelectedMarketOptions] = useState([{ label: "", value: "" }]);
 
-  const [selectedOptions, setSelectedOptions] = useState<string | undefined>();
-
-  useEffect(() => {
-    console.log("Selected options changed:", selectedOptions);
-  }, [selectedOptions]);
-
-  const handleOptionsModal = (option: string) => {
-    setSelectedOptions(option);
+  console.log("USERINFO", JSON.stringify(userInfo));
+  const handleOpenModal = (card: UsersMarketsData) => {
+    setSelectedMarketOptions([
+      { label: card.option1, value: "option1" },
+      { label: card.option2, value: "option2" }
+    ]);
+    
+    setModalOpen(true);
   };
-
   return (
     <>
+      <SettleMarketModal
+        isOpen={modalOpen}
+        options={selectedMarketOptions}
+        onClose={() => setModalOpen(false)}
+        onSubmit={(winner, message) => {
+          console.log("Winner:", winner, "Message:", message);
+          setModalOpen(false); // Optionally close the modal after submit
+        }}
+      />
       <div className="space-y-5">
         {!isProfile && <CreateMarketPreview marketInfo={null} />}
 
         {usersMarketData.map((card, index) => (
-          <div
-            key={index}
-            className="border border-gray-200 shadow rounded-3xl p-4 max-w-full"
-          >
+          <div key={index} className="border border-gray-200 shadow rounded-3xl p-4 max-w-full">
             <div className="flex items-center space-x-2 mb-4">
               <img
                 src={"../buzz2.png"}
@@ -85,12 +98,49 @@ const PersonalMarketsCard = ({ usersMarketData }: NewMarketCardProps) => {
               <div className="text-center mt-4">
                 <button
                   className="bg-gray-300 text-gray-600 py-2 px-4 rounded hover:bg-gray-400"
-                  onClick={() => console.log("Settle Market")}
+                  onClick={() => handleOpenModal(card)}
                 >
                   Settle Market
                 </button>
               </div>
             )}
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={() => setIsOpenBettor(!isOpenBettor)}
+                  className="text-xs pr-4 flex items-center"
+                >
+                  {isOpenBettor ? (
+                    <FaUser className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
+                  ) : (
+                    <FaRegUser className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
+                  )}
+                  {card.totalBettors}
+                </button>
+                <button
+                  onClick={() => setIsOpenComments(!isOpenComments)}
+                  className="text-xs pr-4 flex items-center"
+                >
+                  {isOpenComments ? (
+                    <FaComment className="mr-1 text-gray-500 cursor-pointer" />
+                  ) : (
+                    <FaRegComment className="mr-1 text-gray-500 cursor-pointer" />
+                  )}
+                  {card.totalComments}
+                </button>
+                <button
+                  onClick={() => setIsOpenVolume(!isOpenVolume)}
+                  className="text-xs pr-4 flex items-center"
+                >
+                  {isOpenVolume ? (
+                    <FaChartBar className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
+                  ) : (
+                    <FaRegChartBar className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
+                  )}
+                  {card.totalVolume}
+                </button>
+              </div>
+            </div>
           </div>
         ))}
       </div>

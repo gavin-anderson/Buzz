@@ -31,7 +31,7 @@ function SessionHandler() {
 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('User creation successful:', result);
+                    
                 } else {
                     throw new Error('Failed to create user');
                 }
@@ -44,7 +44,7 @@ function SessionHandler() {
     }
 
     useEffect(() => {
-        console.log(`Ready: ${ready}, Authenticated: ${authenticated}, User:`, user);
+        
         
         if (ready && authenticated && user) {
             createUser();
