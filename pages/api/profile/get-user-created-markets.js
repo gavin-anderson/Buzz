@@ -1,5 +1,5 @@
 
-import { connectToDatabase } from '../../lib/mongodb';
+import { connectToDatabase } from '../../../lib/mongodb';
 
 async function getUserCreatedMarkets(req, res) {
     if (!req.query.userAddress) {

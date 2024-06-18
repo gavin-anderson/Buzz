@@ -1,5 +1,5 @@
 // Assuming you have a `mongodb.js` for DB connection, import it here:
-import { connectToDatabase } from '../../lib/mongodb';
+import { connectToDatabase } from '../../../lib/mongodb';
 
 // Define the function to fetch all users with their market data using MongoDB aggregation
 async function allUsersWithMarketData() {

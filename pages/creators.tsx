@@ -11,11 +11,12 @@ interface UserData {
   tokenPrice: string;
   holders: number;
   markets: number;
+  liveMarkets:number;
   "24h": string;
   "7d": string;
   created: string;
-  avatarUrl: string; // Ensure this field is included in your API response or handle it accordingly
 }
+
 
 const Creators = () => {
   const [activeTab, setActiveTab] = useState("popular"); // Default active tab
@@ -29,7 +30,7 @@ const Creators = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/popular-creators');
+        const response = await fetch('/api/creators/popular-creators');
         if (!response.ok) {
           throw new Error('Network response was not ok: ' + response.statusText);
         }
