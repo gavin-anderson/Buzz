@@ -10,7 +10,6 @@ import {
 } from "react-icons/fa";
 
 import SettleMarketModal from "../../modals/SettleMarketModal";
-import CreateMarketPreview from "./CreateMarketPreview";
 import { useRouter } from "next/router";
 import { usePrivy } from "@privy-io/react-auth";
 import { useUser } from '../../../../contexts/UserContext';
@@ -65,7 +64,6 @@ const PersonalMarketsCard = ({ usersMarketData }: NewMarketCardProps) => {
         }}
       />
       <div className="space-y-5">
-        {!isProfile && <CreateMarketPreview marketInfo={null} />}
 
         {usersMarketData.map((card, index) => (
           <div key={index} className="border border-gray-200 shadow rounded-3xl p-4 max-w-full">
