@@ -1,40 +1,110 @@
-import React, { useState, useEffect } from "react";
-import { FaDollarSign, FaEthereum, FaHandHoldingUsd } from "react-icons/fa"; // Ensure icons are imported
+import React, { useState, useEffect, ChangeEvent } from "react";
+import { FaDollarSign, FaEthereum, FaHandHoldingUsd } from "react-icons/fa";
+import { usePrivy } from "@privy-io/react-auth";
+interface CommentData {
+  userId: string;
+  marketId: string;
+  commentId: string;
+  comment: string;
+  yesHeld: number;
+  noHeld: number;
+  isReply: boolean;
+  replyId: string;
+  user: {
+    username: string;
+    profileName: string;
+  } | null;
+}
 
-const BuySell = ({
+interface MarketData {
+  username: string;
+  creatorAddress: string;
+  marketAddress: string;
+  postMessage: string;
+  option1: string;
+  option2: string;
+  totalComments: number;
+  totalVolume: number;
+  totalBettors: number;
+  isTokenOwned: boolean;
+  comments: CommentData[];
+  postedAgo: string;
+}
+
+interface BuySellProps {
+  isOpenBuySellModal: boolean;
+  setOpenBuySellModal: (isOpen: boolean) => void;
+  buyToken: (token: string) => void;
+  selectedBet: MarketData | null;
+}
+
+const BuySell: React.FC<BuySellProps> = ({
   isOpenBuySellModal,
   setOpenBuySellModal,
   buyToken,
   selectedBet,
 }) => {
+  console.log("SelectedBet: ",selectedBet);
+  const { user } = usePrivy();
   const [activeTab, setActiveTab] = useState("buy");
   const [buyAmount, setBuyAmount] = useState(0);
   const [ethAmount, setEthAmount] = useState(0);
 
   useEffect(() => {
-    const eth = parseFloat(ethAmount); // Convert ethAmount to a floating-point number
-    if (eth === 0.1) {
-      setBuyAmount(967);
-    }
-  }, [ethAmount]); // Effect will run when ethAmount changes
+    const eth = parseFloat(ethAmount.toString());
+    setBuyAmount(eth * 10)
+  }, [ethAmount]);
 
-  const handleSubmitBet = () => {
-    buyToken("@karateCombat");
-    setOpenBuySellModal(false);
+  const handleSubmitBet = async () => {
+    if (!selectedBet) return;
+    try {
+      const transactionData = {
+        tokenId: selectedBet.creatorAddress,
+        traderId: user?.wallet?.address,
+        transactionHash: "0xDummyHash", // Replace with actual transaction hash
+        buySell: activeTab === "buy",
+        amountIn: ethAmount,
+        amountOut: buyAmount,
+        priceBefore: 0, // Replace with actual price before
+        priceAfter: 0, // Replace with actual price after
+        curveConstantBefore: 0, // Replace with actual curve constant before
+        curveConstantAfter: 0, // Replace with actual curve constant after
+        userFees: 0, // Replace with actual user fees
+        protocolFees: 0, // Replace with actual protocol fees
+      };
+      const response = await fetch('/api/tokenTx/submit-token-tx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(transactionData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Something went wrong');
+      }
+
+      const result = await response.json();
+      console.log('Transaction successful:', result);
+      setOpenBuySellModal(false);
+    } catch (error) {
+      console.error('Error processing transaction:', error);
+    }
   };
 
   const handleMaxEth = () => {
-    setEthAmount("0.01");
+    setEthAmount(2.5);
   };
-  const handleEthChange = (e) => {
-    setEthAmount(e.target.value);
+  const handleEthChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setEthAmount(parseFloat(e.target.value));
   };
 
   const handleSell = () => {
     alert("Sell functionality is disabled.");
   };
 
-  if (!isOpenBuySellModal) return null;
+  if (!isOpenBuySellModal || !selectedBet) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 bottom-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
@@ -53,11 +123,10 @@ const BuySell = ({
             ].map(({ name, icon: Icon }) => (
               <li className="flex-1 min-w-0" key={name}>
                 <button
-                  className={`inline-flex items-center justify-center p-4 border-b-2 text-xs sm:text-sm md:text-md ${
-                    activeTab === name.toLowerCase()
+                  className={`inline-flex items-center justify-center p-4 border-b-2 text-xs sm:text-sm md:text-md ${activeTab === name.toLowerCase()
                       ? "text-gray-900 border-gray-900"
                       : "text-gray-500 border-gray-100 hover:text-gray-600 hover:border-gray-300"
-                  } rounded-t-lg w-full`}
+                    } rounded-t-lg w-full`}
                   onClick={() => setActiveTab(name.toLowerCase())}
                   type="button"
                   aria-selected={activeTab === name.toLowerCase()}
@@ -97,12 +166,12 @@ const BuySell = ({
               <div className="text-lg ml-5 font-bold">{buyAmount}</div>
               <div className="flex items-center">
                 <img
-                  src="/karate.jpg" // Replace with actual image path
+                  src="./buzz2.png" // Replace with actual image path
                   alt="Profile Avatar"
                   className="w-10 h-10 mr-3 rounded-full" // Adjust width and height as necessary
                 />
                 <div className="text-sm">
-                  <div className="font-bold">karateCombat</div>
+                  <div className="font-bold">{selectedBet.username}</div>
                   <div>Balance: 0</div>
                 </div>
               </div>

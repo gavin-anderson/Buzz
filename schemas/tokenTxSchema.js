@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-export const tokenTransactionSchema = Joi.object({
+export const tokenTxSchema = Joi.object({
   tokenId: Joi.string().required(),
   traderId: Joi.string().required(),
   transactionHash: Joi.string().required(),

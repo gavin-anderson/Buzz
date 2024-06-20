@@ -1,5 +1,5 @@
-import { connectToDatabase } from '../../lib/mongodb';
-import { marketSchema } from '../../schemas/marketSchema';
+import { connectToDatabase } from '../../../lib/mongodb';
+import { marketSchema } from '../../../schemas/marketSchema';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {

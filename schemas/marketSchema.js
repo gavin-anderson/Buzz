@@ -5,7 +5,11 @@ const marketOptionSchema = Joi.object({
   A: Joi.string().required(),
   B: Joi.string().required(),
 });
-
+const bettorsSchema = Joi.object({
+  bettor: Joi.string().required(),
+  yesHeld: Joi.number().required(),
+  noHeld: Joi.number().required()
+})
 export const marketSchema = Joi.object({
   creatorAddress: Joi.string().required(), // Made required
   marketAddress: Joi.string().required(), // Made required
@@ -26,5 +30,6 @@ export const marketSchema = Joi.object({
   claimed: Joi.number().min(0).default(0),
   unclaimed: Joi.number().min(0).default(0),
   createdAt: Joi.date().required(),
+  bettors: Joi.array().items(bettorsSchema).required(),
   comments: Joi.array().items(commentSchema).required(),
 });
