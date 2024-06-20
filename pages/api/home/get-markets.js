@@ -39,6 +39,8 @@ async function getMarkets(req, res) {
 
             return {
                 username: creatorUser ? creatorUser.username : 'Unknown',
+                creatorAddress: market.creatorAddress,
+                marketAddress: market.marketAddress,
                 postMessage: market.postMessage,
                 option1: market.options[0].A, // Assuming there's always two options
                 option2: market.options[0].B,

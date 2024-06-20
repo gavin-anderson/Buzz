@@ -18,38 +18,40 @@ import { useRouter } from "next/router";
 import BuySell from "../modals/BuySellModal";
 
 interface CommentData {
-    userId: string;
-    marketId: string;
-    commentId: string;
-    comment: string;
-    yesHeld: number;
-    noHeld: number;
-    isReply: boolean;
-    replyId: string;
-    user: {
-      username: string;
-      profileName: string;
-    } | null;
-  }
-  
-  interface MarketData {
+  userId: string;
+  marketId: string;
+  commentId: string;
+  comment: string;
+  yesHeld: number;
+  noHeld: number;
+  isReply: boolean;
+  replyId: string;
+  user: {
     username: string;
-    postMessage: string;
-    option1: string;
-    option2: string;
-    totalComments: number;
-    totalVolume: number;
-    totalBettors: number;
-    isTokenOwned: boolean;
-    comments: CommentData[];
-    postedAgo: string;
-  }
-  
-  interface MainFeedProps {
-    marketFeed: MarketData[];
-  }
+    profileName: string;
+  } | null;
+}
 
-  const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) =>  {
+interface MarketData {
+  username: string;
+  creatorAddress: string;
+  marketAddress: string;
+  postMessage: string;
+  option1: string;
+  option2: string;
+  totalComments: number;
+  totalVolume: number;
+  totalBettors: number;
+  isTokenOwned: boolean;
+  comments: CommentData[];
+  postedAgo: string;
+}
+
+interface MainFeedProps {
+  marketFeed: MarketData[];
+}
+
+const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
   const router = useRouter();
   const isProfile = router.pathname === "/profile";
   console.log(marketFeed);
@@ -59,9 +61,9 @@ interface CommentData {
   const [isOpenVolume, setIsOpenVolume] = useState(false);
   const [isOpenBetModal, setOpenBetModal] = useState(false);
   const [isOpenBuySellModal, setOpenBuySellModal] = useState(false);
-  const [selectedBet, setSelectedBet] = useState({});
-  const [selectedOptions, setSelectedOptions] = useState();
-  const [cardsData, setCardsData] = useState(marketFeed);
+  const [selectedBet, setSelectedBet] = useState<MarketData | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<string>("");
+  const [cardsData, setCardsData] = useState<MarketData[]>(marketFeed);
   const [marketInfo, setMarketInfo] = useState({
     title: "",
     option1: "",
@@ -71,49 +73,45 @@ interface CommentData {
     minutes: 0,
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setMarketInfo((prev) => ({ ...prev, [name]: value }));
   };
 
-  const placeBet = (cardId) => {
+  const placeBet = (cardId: string) => {
     const newCardsData = cardsData.map((card) =>
-      card.userHandle === cardId ? { ...card, hasBet: true } : card
+      card.username === cardId ? { ...card, hasBet: true } : card
     );
-    // Assuming you can setCardsData here, but you need to have cardsData in state to do this
     setCardsData(newCardsData);
   };
 
-  const buyToken = (cardId) => {
+  const buyToken = (cardId: string) => {
     const newCardsData = cardsData.map((card) =>
-      card.userHandle === cardId ? { ...card, isHolding: true } : card
+      card.username === cardId ? { ...card, isHolding: true } : card
     );
-    // Assuming you can setCardsData here, but you need to have cardsData in state to do this
     setCardsData(newCardsData);
   };
 
-  // Inside your component
-  function handleOptionsModal(card, option) {
+  const handleOptionsModal = (card: MarketData, option: string) => {
     setSelectedBet(card);
     setSelectedOptions(option);
     setOpenBetModal(true);
-  }
+  };
 
-  // Add useEffect to log the state after it updates
   useEffect(() => {
     if (selectedOptions) {
+      console.log(selectedOptions);
     }
-  }, [selectedOptions]); // This effect runs whenever selectedOptions changes
+  }, [selectedOptions]);
 
   return (
     <>
-      {" "}
       <BuySell
         isOpenBuySellModal={isOpenBuySellModal}
         setOpenBuySellModal={setOpenBuySellModal}
         buyToken={buyToken}
         selectedBet={selectedBet}
-      ></BuySell>
+      />
       {selectedBet && selectedOptions && (
         <BetModal
           isOpenBetModal={isOpenBetModal}
@@ -121,7 +119,7 @@ interface CommentData {
           selectedBet={selectedBet}
           selectedOptions={selectedOptions}
           placeBet={placeBet}
-        ></BetModal>
+        />
       )}
       <div className="space-y-5">
         {!isProfile && (
@@ -157,36 +155,35 @@ interface CommentData {
             {card.isTokenOwned ? (
               !card.hasBet ? (
                 <div className="flex flex-col md:flex-row justify-around md:space-x-4">
-                  
-                    <button 
-                      onClick={() => handleOptionsModal(card, card.option1)}
-                      className="flex-1 text-center p-2 border border-gray-300 rounded-xl m-1 bg-fuchsia-800 hover:bg-fuchsia-950 text-white"
-                    >
-                      <div>
-                        <p className="font-bold">{card.option1}</p>
-                        {/* <p>{option.multiplier}x</p> */}
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => handleOptionsModal(card, card.option2)}
-                      className="flex-1 text-center p-2 border border-gray-300 rounded-xl m-1 bg-fuchsia-800 hover:bg-fuchsia-950 text-white"
-                    >
-                      <div>
-                        <p className="font-bold">{card.option2}</p>
-                        {/* <p>{option.multiplier}x</p> */}
-                      </div>
-                    </button>
-                  
+                  <button
+                    onClick={() => handleOptionsModal(card, card.option1)}
+                    className="flex-1 text-center p-2 border border-gray-300 rounded-xl m-1 bg-fuchsia-800 hover:bg-fuchsia-950 text-white"
+                  >
+                    <div>
+                      <p className="font-bold">{card.option1}</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleOptionsModal(card, card.option2)}
+                    className="flex-1 text-center p-2 border border-gray-300 rounded-xl m-1 bg-fuchsia-800 hover:bg-fuchsia-950 text-white"
+                  >
+                    <div>
+                      <p className="font-bold">{card.option2}</p>
+                    </div>
+                  </button>
                 </div>
               ) : (
-                <button className="w-full mt-3 rounded-3xl hover:bg-fuchsia-900 hover:text-white  bg-fuchsia-800 text-white py-2">
+                <button className="w-full mt-3 rounded-3xl hover:bg-fuchsia-900 hover:text-white bg-fuchsia-800 text-white py-2">
                   Cash out for {card.cashOutPrice} {card.tokenName}
                 </button>
               )
             ) : (
               <div>
                 <button
-                  onClick={() => setOpenBuySellModal(true)}
+                  onClick={() => {
+                    setSelectedBet(card);
+                    setOpenBuySellModal(true);
+                  }}
                   className="w-full mt-3 rounded-3xl border-4 border-black hover:bg-fuchsia-900 hover:text-white bg-fuchsia-800 text-white py-2"
                 >
                   Buy {card.username} to play
@@ -198,38 +195,35 @@ interface CommentData {
               <div className="flex items-center space-x-1">
                 <button
                   onClick={() => setIsOpenBettor(!isOpenBettor)}
-                  className="text-xs pr-4  flex items-center"
+                  className="text-xs pr-4 flex items-center"
                 >
                   {isOpenBettor ? (
-                    <FaUser className="mr-1  hover:fill-current text-gray-500 cursor-pointer" />
+                    <FaUser className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
                   ) : (
-                    <FaRegUser className="mr-1  hover:fill-current text-gray-500 cursor-pointer" />
+                    <FaRegUser className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
                   )}
-
                   {card.totalBettors}
                 </button>
                 <button
                   onClick={() => setIsOpenComments(!isOpenComments)}
-                  className="text-xs pr-4  flex items-center   "
+                  className="text-xs pr-4 flex items-center"
                 >
                   {isOpenComments ? (
-                    <FaComment className="mr-1   text-gray-500 cursor-pointer" />
+                    <FaComment className="mr-1 text-gray-500 cursor-pointer" />
                   ) : (
-                    <FaRegComment className="mr-1   text-gray-500 cursor-pointer" />
+                    <FaRegComment className="mr-1 text-gray-500 cursor-pointer" />
                   )}
-
                   {card.totalComments}
                 </button>
                 <button
                   onClick={() => setIsOpenVolume(!isOpenVolume)}
-                  className="text-xs pr-4  flex items-center"
+                  className="text-xs pr-4 flex items-center"
                 >
                   {isOpenVolume ? (
-                    <FaChartBar className="mr-1  hover:fill-current text-gray-500 cursor-pointer" />
+                    <FaChartBar className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
                   ) : (
                     <FaRegChartBar className="mr-1 hover:fill-current text-gray-500 cursor-pointer" />
                   )}
-
                   {card.totalVolume}
                 </button>
               </div>

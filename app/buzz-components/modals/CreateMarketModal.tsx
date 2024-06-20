@@ -1,8 +1,24 @@
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import { FaUpload } from "react-icons/fa";
+import { usePrivy } from "@privy-io/react-auth";
 
-const CreateMarketModal = ({ isOpenCreateModal, setOpenCreateModal }) => {
-  const [marketInfo, setMarketInfo] = useState({
+interface CreateMarketModalProps {
+  isOpenCreateModal: boolean;
+  setOpenCreateModal: (isOpen: boolean) => void;
+}
+
+interface MarketInfo {
+  title: string;
+  option1: string;
+  option2: string;
+  days: number;
+  hours: number;
+  minutes: number;
+}
+
+const CreateMarketModal: React.FC<CreateMarketModalProps> = ({ isOpenCreateModal, setOpenCreateModal }) => {
+  const { ready, authenticated, user } = usePrivy();
+  const [marketInfo, setMarketInfo] = useState<MarketInfo>({
     title: "",
     option1: "",
     option2: "",
@@ -15,12 +31,66 @@ const CreateMarketModal = ({ isOpenCreateModal, setOpenCreateModal }) => {
     setOpenCreateModal(false);
   }
 
-  function handleChange(e) {
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setMarketInfo((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'days' || name === 'hours' || name === 'minutes' ? parseInt(value) : value,
     }));
+  }
+
+  async function handleSubmit() {
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + marketInfo.days);
+    expiry.setHours(expiry.getHours() + marketInfo.hours);
+    expiry.setMinutes(expiry.getMinutes() + marketInfo.minutes);
+
+    const marketData = {
+      creatorAddress: user?.wallet?.address || '',
+      marketAddress: "0xGeneratedMarketAddress",
+      marketType: "Binary",
+      postMessage: marketInfo.title,
+      options: [
+        { A: marketInfo.option1, B: marketInfo.option2 }
+      ],
+      totalComments: 0,
+      totalVolume: 0,
+      totalBettors: 0,
+      K: 0,
+      expiry,
+      isSettled: false,
+      settledAt: null,
+      settleMessage: null,
+      supplyChange: 0,
+      reportedValue: null,
+      isReportedValue: false,
+      claimed: 0,
+      unclaimed: 0,
+      createdAt: new Date(),
+      bettors: [],
+      comments: [],
+    };
+
+    try {
+      const response = await fetch('/api/createMarket/create-market', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(marketData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Something went wrong');
+      }
+
+      const result = await response.json();
+      console.log('Market created successfully:', result);
+      onCloseModal();
+    } catch (error) {
+      console.error('Error creating market:', error);
+    }
   }
 
   if (!isOpenCreateModal) return null;
@@ -118,7 +188,7 @@ const CreateMarketModal = ({ isOpenCreateModal, setOpenCreateModal }) => {
             <button
               type="button"
               className="flex-grow px-4 py-2 bg-fuchsia-800 rounded-xl text-white hover:bg-fuchsia-900"
-              onClick={() => console.log("Launching Market...", marketInfo)}
+              onClick={handleSubmit}
             >
               Launch Market
             </button>
