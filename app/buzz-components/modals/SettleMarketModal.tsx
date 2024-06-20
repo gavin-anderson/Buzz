@@ -9,10 +9,12 @@ interface SettleMarketModalProps {
   isOpen: boolean;
   options: MarketOption[];
   onClose: () => void;
-  onSubmit: (winner: string, message: string) => void;
+  onSubmit: () => void;
+  creatorAddress: string;
+  marketAddress: string;
 }
 
-const SettleMarketModal: React.FC<SettleMarketModalProps> = ({ isOpen, options, onClose, onSubmit }) => {
+const SettleMarketModal: React.FC<SettleMarketModalProps> = ({ isOpen, options, onClose, onSubmit,creatorAddress, marketAddress }) => {
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [message, setMessage] = useState<string>('');
 
@@ -26,13 +28,48 @@ const SettleMarketModal: React.FC<SettleMarketModalProps> = ({ isOpen, options, 
     setMessage(e.target.value);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (selectedOption) {
-      onSubmit(selectedOption, message);  // Pass the label as 'winner'
+      const data = {
+        creatorAddress,
+        marketAddress,
+        settledAt: new Date().toISOString(),
+        reportedValue: selectedOption,
+        isReportedValue: selectedOption === options[0].label,
+        settleMessage: message,
+      };
+  
+      try {
+        const response = await fetch('/api/settleMarket/settle-market', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+  
+        if (response.ok) {
+          onClose(); // Close the modal
+          onSubmit(); // Additionally call onSubmit to perform any extra actions defined in the parent component
+        } else {
+          const errorData = await response.json();
+          console.error('Error settling market:', errorData.error);
+          alert('Error settling market: ' + errorData.error);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error('Error:', error.message);
+          alert('Error: ' + error.message);
+        } else {
+          console.error('Unknown error:', error);
+          alert('Unknown error occurred');
+        }
+      }
     } else {
       alert('Please select a winner.');
     }
   };
+  
 
   if (!isOpen) return null;
 
