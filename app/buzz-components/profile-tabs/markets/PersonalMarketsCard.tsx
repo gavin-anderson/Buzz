@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  FaRegClock,
   FaUser,
   FaRegUser,
   FaComment,
@@ -8,13 +7,14 @@ import {
   FaChartBar,
   FaRegChartBar,
 } from "react-icons/fa";
-
 import SettleMarketModal from "../../modals/SettleMarketModal";
 import { useRouter } from "next/router";
 import { usePrivy } from "@privy-io/react-auth";
 import { useUser } from '../../../../contexts/UserContext';
 
 type UsersMarketsData = {
+  creatorAddress: string;
+  marketAddress: string;
   postMessage: string;
   option1: string;
   option2: string;
@@ -26,7 +26,12 @@ type UsersMarketsData = {
   settleMessage: string;
   postedAgo: string;
   comments: string[];
-}
+};
+
+type MarketOption = {
+  label: string;
+  value: string;
+};
 
 interface NewMarketCardProps {
   usersMarketData: UsersMarketsData[];
@@ -41,7 +46,8 @@ const PersonalMarketsCard = ({ usersMarketData }: NewMarketCardProps) => {
   const [isOpenComments, setIsOpenComments] = useState(false);
   const [isOpenVolume, setIsOpenVolume] = useState(false);
   const [isOpenBettor, setIsOpenBettor] = useState(false);
-  const [selectedMarketOptions, setSelectedMarketOptions] = useState([{ label: "", value: "" }]);
+  const [selectedMarketOptions, setSelectedMarketOptions] = useState<MarketOption[]>([]);
+  const [selectedMarket, setSelectedMarket] = useState<UsersMarketsData | null>(null);
 
   console.log("USERINFO", JSON.stringify(userInfo));
   const handleOpenModal = (card: UsersMarketsData) => {
@@ -49,22 +55,23 @@ const PersonalMarketsCard = ({ usersMarketData }: NewMarketCardProps) => {
       { label: card.option1, value: "option1" },
       { label: card.option2, value: "option2" }
     ]);
-    
+    setSelectedMarket(card);
     setModalOpen(true);
   };
+
   return (
     <>
-      <SettleMarketModal
-        isOpen={modalOpen}
-        options={selectedMarketOptions}
-        onClose={() => setModalOpen(false)}
-        onSubmit={(winner, message) => {
-          console.log("Winner:", winner, "Message:", message);
-          setModalOpen(false); // Optionally close the modal after submit
-        }}
-      />
+      {selectedMarket && (
+        <SettleMarketModal
+          isOpen={modalOpen}
+          options={selectedMarketOptions}
+          onClose={() => setModalOpen(false)}
+          onSubmit={()=> setModalOpen(false)}
+          creatorAddress={String(user?.wallet?.address)}
+          marketAddress={selectedMarket.marketAddress}
+        />
+      )}
       <div className="space-y-5">
-
         {usersMarketData.map((card, index) => (
           <div key={index} className="border border-gray-200 shadow rounded-3xl p-4 max-w-full">
             <div className="flex items-center space-x-2 mb-4">

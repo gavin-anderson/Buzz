@@ -1,4 +1,3 @@
-
 import { connectToDatabase } from '../../../lib/mongodb';
 
 async function getUserCreatedMarkets(req, res) {
@@ -13,7 +12,30 @@ async function getUserCreatedMarkets(req, res) {
             creatorAddress: req.query.userAddress
         }).toArray();
 
+        const now = new Date();
+        markets.sort((a, b) => {
+            const aExpiry = new Date(a.expiryDate);
+            const bExpiry = new Date(b.expiryDate);
+
+            if (a.isSettled && b.isSettled) {
+                return new Date(a.settledAt) - new Date(b.settledAt); // Oldest settled at back
+            } else if (a.isSettled) {
+                return 1; // a goes to the back
+            } else if (b.isSettled) {
+                return -1; // b goes to the back
+            } else if (!a.expiryDate && b.expiryDate && bExpiry.getTime() > now.getTime() + 7 * 24 * 60 * 60 * 1000) {
+                return -1; // a (no expiry) before b (expiry > 1 week)
+            } else if (!b.expiryDate && a.expiryDate && aExpiry.getTime() > now.getTime() + 7 * 24 * 60 * 60 * 1000) {
+                return 1; // b (no expiry) before a (expiry > 1 week)
+            } else if (aExpiry < now && bExpiry < now) {
+                return bExpiry - aExpiry; // Most past expiry at front
+            } else {
+                return aExpiry - bExpiry; // Nearest expiry at front
+            }
+        });
+
         const result = markets.map(market => ({
+            marketAddress: market.marketAddress,
             postMessage: market.postMessage,
             option1: market.options[0].A, // Assuming there's always two options
             option2: market.options[0].B,

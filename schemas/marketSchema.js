@@ -26,7 +26,7 @@ export const marketSchema = Joi.object({
   settleMessage: Joi.string().allow(null).required(),
   supplyChange: Joi.number().required(), // Made required
   reportedValue: Joi.string().allow(null).required(),
-  isReportedValue: Joi.boolean().default(false),
+  isReportedValue: Joi.boolean().allow(null).default(null),
   claimed: Joi.number().min(0).default(0),
   unclaimed: Joi.number().min(0).default(0),
   createdAt: Joi.date().required(),
