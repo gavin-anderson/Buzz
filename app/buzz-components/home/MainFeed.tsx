@@ -1,20 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  FaRegClock,
-  FaRegHeart,
-  FaHeart,
-  FaRegComment,
-  FaRegHandshake,
-  FaRegChartBar,
-  FaUser,
-  FaRegUser,
-  FaComment,
-  FaChartBar,
-  FaUpload,
-} from "react-icons/fa";
+import { useRouter } from "next/router";
+import { FaUser, FaRegUser, FaComment, FaRegComment, FaChartBar, FaRegChartBar } from "react-icons/fa";
 import BetModal from "../modals/BetModal";
 import CreateMarketPreview from "./CreateMarketPreview";
-import { useRouter } from "next/router";
 import BuySell from "../modals/BuySellModal";
 
 interface CommentData {
@@ -54,8 +42,6 @@ interface MainFeedProps {
 const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
   const router = useRouter();
   const isProfile = router.pathname === "/profile";
-  console.log(marketFeed);
-
   const [isOpenBettor, setIsOpenBettor] = useState(false);
   const [isOpenComments, setIsOpenComments] = useState(false);
   const [isOpenVolume, setIsOpenVolume] = useState(false);
@@ -79,17 +65,11 @@ const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
   };
 
   const placeBet = (cardId: string) => {
-    const newCardsData = cardsData.map((card) =>
-      card.username === cardId ? { ...card, hasBet: true } : card
-    );
-    setCardsData(newCardsData);
+    setCardsData(cardsData.map(card => card.username === cardId ? { ...card, hasBet: true } : card));
   };
 
   const buyToken = (cardId: string) => {
-    const newCardsData = cardsData.map((card) =>
-      card.username === cardId ? { ...card, isHolding: true } : card
-    );
-    setCardsData(newCardsData);
+    setCardsData(cardsData.map(card => card.username === cardId ? { ...card, isHolding: true } : card));
   };
 
   const handleOptionsModal = (card: MarketData, option: string) => {
@@ -128,18 +108,10 @@ const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
             handleChange={handleChange}
           />
         )}
-
-        {cardsData.map((card, index) => (
-          <div
-            key={index}
-            className="border border-gray-200 shadow rounded-3xl p-4 max-w-full"
-          >
+        {cardsData.length > 0 ? cardsData.map((card, index) => (
+          <div key={index} className="border border-gray-200 shadow rounded-3xl p-4 max-w-full">
             <div className="flex items-center space-x-2 mb-4">
-              <img
-                src={"./buzz2.png"}
-                alt="Profile"
-                className="w-10 h-10 rounded-full bg-fuchsia-800 object-cover"
-              />
+              <img src={"./buzz2.png"} alt="Profile" className="w-10 h-10 rounded-full bg-fuchsia-800 object-cover" />
               <div>
                 <p className="font-bold">
                   <span className="text-fuchsia-800">{card.username}</span>
@@ -190,7 +162,6 @@ const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
                 </button>
               </div>
             )}
-
             <div className="flex justify-between items-center mt-4">
               <div className="flex items-center space-x-1">
                 <button
@@ -230,7 +201,7 @@ const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
               <div className="flex space-x-4"></div>
             </div>
           </div>
-        ))}
+        )) : <p className="text-center text-gray-500">No Markets Created Yet</p>}
       </div>
     </>
   );

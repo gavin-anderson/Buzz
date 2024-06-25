@@ -7,6 +7,7 @@ async function getUserInfo(req, res) {
     }
 
     try {
+        console.log("get-user-info")
         const { db } = await connectToDatabase();
 
         // Retrieve user details by privy_id
@@ -15,21 +16,21 @@ async function getUserInfo(req, res) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Retrieve token details where tokenId matches the user's walletAddress
-        const tokenDetails = await db.collection('tokens').findOne({ tokenId: user.walletAddress });
-        if (!tokenDetails) {
-            return res.status(404).json({ message: "Token details not found for this user" });
-        }
-
-        // Prepare the result
+        // Initialize the response object with user data
         const result = {
-            profileName: user.profileName,
-            username: user.username,
+            profileName: user.profileName || 'N/A',
+            username: user.username || 'N/A',
             tokensOwned: {
-                array: user.tokensOwned,
-                length: user.tokensOwned.length
+                array: user.tokensOwned || [],
+                length: user.tokensOwned ? user.tokensOwned.length : 0
             },
-            tokenDetails: {
+            tokenDetails: null // Default token details to null if not found
+        };
+
+        // Attempt to retrieve token details
+        const tokenDetails = await db.collection('tokens').findOne({ tokenId: user.walletAddress });
+        if (tokenDetails) {
+            result.tokenDetails = {
                 tokenSupply: tokenDetails.totalSupply,
                 priceETH: tokenDetails.priceETH,
                 priceUSD: tokenDetails.priceUSD,
@@ -39,11 +40,13 @@ async function getUserInfo(req, res) {
                 totalUserFees: tokenDetails.totalUserFees,
                 totalProtocolFees: tokenDetails.totalProtocolFees,
                 tokenHolders: {
-                    array: tokenDetails.tokenHolders,
-                    length: tokenDetails.tokenHolders.length
+                    array: tokenDetails.tokenHolders || [],
+                    length: tokenDetails.tokenHolders ? tokenDetails.tokenHolders.length : 0
                 }
-            }
-        };
+            };
+        }
+
+        // Return the result with as much information as available
         res.status(200).json(result);
     } catch (error) {
         console.error('Error accessing database:', error);

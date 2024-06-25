@@ -3,6 +3,7 @@ import { connectToDatabase } from '../../../lib/mongodb';
 
 // Define the function to fetch all users with their market data using MongoDB aggregation
 async function allUsersWithMarketData() {
+  console.log("popular-creators");
   const { db } = await connectToDatabase();
   const users = await db.collection('users').aggregate([
     {
