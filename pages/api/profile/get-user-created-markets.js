@@ -6,6 +6,7 @@ async function getUserCreatedMarkets(req, res) {
     }
 
     try {
+        console.log("get-user-created-markets")
         const { db } = await connectToDatabase();
         
         const markets = await db.collection('markets').find({

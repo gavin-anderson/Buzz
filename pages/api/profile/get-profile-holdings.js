@@ -8,6 +8,7 @@ async function getProfileHoldings(req, res) {
     }
 
     try {
+        console.log("get-profile-holdings")
         const { db } = await connectToDatabase();
         const tokenIds = req.query.tokenIds;  // Assume tokenIds are passed as a comma-separated string
         console.log(tokenIds);

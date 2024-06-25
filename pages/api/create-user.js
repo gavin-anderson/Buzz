@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   const { error, value } = userSchema.validate(req.body);
   if (error) return res.status(400).json({ error: error.details[0].message });
-
+  console.log("create-user")
   const { db } = await connectToDatabase();
   const collection = db.collection('users');
 

@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   }
 
   const { creatorAddress, marketAddress, settledAt, reportedValue, isReportedValue, settleMessage } = value;
-
+  console.log("settle-market")
   const { db, client } = await connectToDatabase();
   const session = client.startSession();
 
