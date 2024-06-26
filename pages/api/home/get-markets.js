@@ -15,7 +15,7 @@ async function getMarkets(req, res) {
         }
 
         // Ensure tokensOwned is an array before mapping over it
-        const tokenAddresses = user.tokensOwned ? user.tokensOwned.map(token => Object.keys(token)[0]).filter(tokenAddress => tokenAddress !== null) : [];
+        const tokenAddresses = user.tokensOwned ? user.tokensOwned.map(token => token.tokenId).filter(tokenId => tokenId !== null) : [];
 
         const markets = await db.collection('markets').find({ isSettled: false }).toArray();
         const users = await db.collection('users').find({}).toArray();
