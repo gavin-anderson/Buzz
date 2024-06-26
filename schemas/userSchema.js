@@ -12,5 +12,5 @@ export const userSchema = Joi.object({
   profileName: Joi.string().required(),
   email: Joi.string().email().required(),
   createdAt: Joi.date().required(),
-  tokensOwned: Joi.array().items(tokenOwnedSchema).optional(),
+  tokensOwned: Joi.array().items(tokenOwnedSchema).required(),
 });

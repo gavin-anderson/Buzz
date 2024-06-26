@@ -45,7 +45,6 @@ const Profile = () => {
   const [holdingDetails, setHoldingDetails] = useState<UserHoldings[]>([]);
   const { user } = usePrivy();
   const userInfo = useUser();
-  console.log(`UserInfo: ${JSON.stringify(userInfo)}`)
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
   };

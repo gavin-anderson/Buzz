@@ -8,6 +8,7 @@ export default async function handler(req, res) {
 
   const { error, value } = tokenTxSchema.validate(req.body);
   if (error) {
+    console.error("Validation Error:", error.details);
     return res.status(400).json({ error: error.details[0].message });
   }
   console.log("submit-tokenTx")
@@ -30,18 +31,27 @@ export default async function handler(req, res) {
     }
 
     // Update token and user balances
+    let updatedTokenHolders;
+    let totalVolumeUpdate = value.amountOut;
+    let totalTradesUpdate = 1;
+
     if (value.buySell) {
       // Buy
-      const updatedTokenHolders = token.tokenHolders.map(holder =>
-        holder.userId === value.traderId
-          ? { ...holder, amount: holder.amount + value.amountOut }
-          : holder
-      );
+      const existingHolderIndex = token.tokenHolders.findIndex(holder => holder.userId === value.traderId);
+      if (existingHolderIndex > -1) {
+        updatedTokenHolders = token.tokenHolders.map(holder =>
+          holder.userId === value.traderId
+            ? { ...holder, amount: holder.amount + value.amountOut }
+            : holder
+        );
+      } else {
+        updatedTokenHolders = [...token.tokenHolders, { userId: value.traderId, amount: value.amountOut }];
+      }
 
       await db.collection('tokens').updateOne(
         { tokenId: value.tokenId },
         {
-          $inc: { totalSupply: value.amountOut },
+          $inc: { totalSupply: value.amountOut, volume: totalVolumeUpdate, totalTrades: totalTradesUpdate },
           $set: { tokenHolders: updatedTokenHolders },
         },
         { session }
@@ -67,16 +77,16 @@ export default async function handler(req, res) {
       );
     } else {
       // Sell (handle sell logic)
-      const updatedTokenHolders = token.tokenHolders.map(holder =>
+      updatedTokenHolders = token.tokenHolders.map(holder =>
         holder.userId === value.traderId
           ? { ...holder, amount: holder.amount - value.amountOut }
           : holder
-      );
+      ).filter(holder => holder.amount > 0); // Remove holders with zero amount
 
       await db.collection('tokens').updateOne(
         { tokenId: value.tokenId },
         {
-          $inc: { totalSupply: -value.amountOut },
+          $inc: { totalSupply: -value.amountOut, volume: totalVolumeUpdate, totalTrades: totalTradesUpdate },
           $set: { tokenHolders: updatedTokenHolders },
         },
         { session }
@@ -114,6 +124,7 @@ export default async function handler(req, res) {
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
+    console.error("Transaction Error:", err.message);
     res.status(400).json({ error: err.message });
   }
 }

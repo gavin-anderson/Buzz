@@ -21,8 +21,8 @@ interface CommentData {
 
 interface MarketData {
   username: string;
-  creatorAddress: string,
-  marketAddress: string,
+  creatorAddress: string;
+  marketAddress: string;
   postMessage: string;
   option1: string;
   option2: string;
@@ -37,22 +37,25 @@ interface MarketData {
 interface MainFeedProps {
   marketFeed: MarketData[];
 }
+
 const Home = () => {
   const { ready, authenticated, user } = usePrivy();
   const router = useRouter();
   const [feed, setFeed] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (ready && !authenticated) {
       router.push("/");
     }
   }, [ready, authenticated, router]);
+
   useEffect(() => {
-    if (ready && authenticated && user && user.wallet) {
-      const fetchMarkets = async () => {
+    const fetchMarkets = async () => {
+      if (ready && authenticated && user && user.wallet) {
         try {
-          const response = await fetch(`/api/home/get-markets?userAddress=${user.wallet?.address}`);
+          const response = await fetch(`/api/home/get-markets?userAddress=${user.wallet.address}`);
           if (!response.ok) {
             throw new Error("Failed to fetch markets");
           }
@@ -63,10 +66,35 @@ const Home = () => {
         } finally {
           setLoading(false);
         }
-      };
+      }
+    };
 
-      fetchMarkets();
-    }
+    fetchMarkets();
+  }, [ready, authenticated, user]);
+
+  useEffect(() => {
+    const createToken = async () => {
+      if (ready && authenticated && user && user.wallet) {
+        try {
+          const response = await fetch('/api/create-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ tokenId: user.wallet.address }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create token');
+          }
+        } catch (error) {
+          console.error('Error creating token:', error);
+        }
+      }
+    };
+
+    createToken();
   }, [ready, authenticated, user]);
 
   if (loading) {
@@ -76,10 +104,11 @@ const Home = () => {
   if (error) {
     return <div>Error: {error}</div>;
   }
+
   return (
     <MainContainer>
       <div className="w-full max-w-4xl mt-5">
-        <MainFeed marketFeed={feed}/>
+        <MainFeed marketFeed={feed} />
       </div>
     </MainContainer>
   );

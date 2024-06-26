@@ -25,7 +25,8 @@ function SessionHandler() {
                         username: _username,  
                         profileName: _profileName,  
                         createdAt: user.createdAt,
-                        email: _email
+                        email: _email,
+                        tokensOwned: [],
                     }),
                 });
 
