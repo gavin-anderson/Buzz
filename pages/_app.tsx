@@ -3,7 +3,6 @@ import { PrivyProvider, usePrivy } from "@privy-io/react-auth";
 import {UserProvider} from "../contexts/UserContext"
 import { useRouter } from "next/router";
 import { AppProps } from "next/app";
-import SessionHandler from "@/app/buzz-components/SessionHandler";
 import Head from "next/head";
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -27,12 +26,11 @@ function MyApp({ Component, pageProps }: AppProps) {
           },
         }}
         onSuccess={() => {
-          router.push("/home");
+          router.push("/");
         }}
       >
         <UserProvider>
           <RootLayout>
-            <SessionHandler/>
             <Component {...pageProps} />
           </RootLayout>
         </UserProvider>

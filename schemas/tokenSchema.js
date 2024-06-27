@@ -7,6 +7,7 @@ const tokenHolderSchema = Joi.object({
 
 export const tokenSchema = Joi.object({
   tokenId: Joi.string().required(),
+  tokenName: Joi.string().required(),
   totalSupply: Joi.number().required(),
   priceETH: Joi.number().optional(),
   priceUSD: Joi.number().optional(),

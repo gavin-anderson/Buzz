@@ -1,6 +1,7 @@
 import { useState, ChangeEvent } from "react";
 import { FaUpload } from "react-icons/fa";
 import { usePrivy } from "@privy-io/react-auth";
+import { useUser } from "@/contexts/UserContext";
 
 interface CreateMarketModalProps {
   isOpenCreateModal: boolean;
@@ -17,7 +18,8 @@ interface MarketInfo {
 }
 
 const CreateMarketModal: React.FC<CreateMarketModalProps> = ({ isOpenCreateModal, setOpenCreateModal }) => {
-  const { ready, authenticated, user } = usePrivy();
+  const { user } = usePrivy();
+  const userInfo = useUser();
   const [marketInfo, setMarketInfo] = useState<MarketInfo>({
     title: "",
     option1: "",
@@ -48,6 +50,7 @@ const CreateMarketModal: React.FC<CreateMarketModalProps> = ({ isOpenCreateModal
     const marketData = {
       creatorAddress: user?.wallet?.address || '',
       marketAddress: expiry.toISOString(),
+      tokenName: userInfo?.tokenDetails.tokenName,
       marketType: "Binary",
       postMessage: marketInfo.title,
       options: [

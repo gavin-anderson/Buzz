@@ -21,6 +21,7 @@ interface CommentData {
 
 interface MarketData {
   username: string;
+  tokenName: string;
   creatorAddress: string;
   marketAddress: string;
   postMessage: string;
@@ -37,7 +38,6 @@ interface MarketData {
 interface MainFeedProps {
   marketFeed: MarketData[];
 }
-
 const Home = () => {
   const { ready, authenticated, user } = usePrivy();
   const router = useRouter();
@@ -70,31 +70,6 @@ const Home = () => {
     };
 
     fetchMarkets();
-  }, [ready, authenticated, user]);
-
-  useEffect(() => {
-    const createToken = async () => {
-      if (ready && authenticated && user && user.wallet) {
-        try {
-          const response = await fetch('/api/create-token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ tokenId: user.wallet.address }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to create token');
-          }
-        } catch (error) {
-          console.error('Error creating token:', error);
-        }
-      }
-    };
-
-    createToken();
   }, [ready, authenticated, user]);
 
   if (loading) {

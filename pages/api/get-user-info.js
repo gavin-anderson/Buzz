@@ -32,6 +32,7 @@ async function getUserInfo(req, res) {
         if (tokenDetails) {
             result.tokenDetails = {
                 tokenSupply: tokenDetails.totalSupply,
+                tokenName: tokenDetails.tokenName,
                 priceETH: tokenDetails.priceETH,
                 priceUSD: tokenDetails.priceUSD,
                 totalTrades: tokenDetails.totalTrades,

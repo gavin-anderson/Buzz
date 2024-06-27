@@ -8,6 +8,7 @@ interface TokenHolderList {
 
 interface TokenDetails {
     tokenSupply: number;
+    tokenName: string;
     priceETH: number;
     priceUSD: number;
     totalTrades: number;
