@@ -22,7 +22,6 @@ interface CommentData {
 
 interface MarketData {
   username: string;
-  tokenName: string;
   creatorAddress: string;
   marketAddress: string;
   postMessage: string;
@@ -147,7 +146,7 @@ const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
                 </div>
               ) : (
                 <button className="w-full mt-3 rounded-3xl hover:bg-fuchsia-900 hover:text-white bg-fuchsia-800 text-white py-2">
-                  Cash out for {card.cashOutPrice} {card.tokenName}
+                  Cash out for {card.cashOutPrice} {card.username}
                 </button>
               )
             ) : (
@@ -159,7 +158,7 @@ const MainFeed: React.FC<MainFeedProps> = ({ marketFeed }) => {
                   }}
                   className="w-full mt-3 rounded-3xl border-4 border-black hover:bg-fuchsia-900 hover:text-white bg-fuchsia-800 text-white py-2"
                 >
-                  Buy {card.tokenName} to play
+                  Buy {card.username} to play
                 </button>
               </div>
             )}

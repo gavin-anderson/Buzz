@@ -49,7 +49,6 @@ const PersonalMarketsCard = ({ usersMarketData }: NewMarketCardProps) => {
   const [selectedMarketOptions, setSelectedMarketOptions] = useState<MarketOption[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<UsersMarketsData | null>(null);
 
-  console.log("USERINFO", JSON.stringify(userInfo));
   const handleOpenModal = (card: UsersMarketsData) => {
     setSelectedMarketOptions([
       { label: card.option1, value: "option1" },

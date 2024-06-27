@@ -21,7 +21,6 @@ interface CommentData {
 
 interface MarketData {
   username: string;
-  tokenName: string;
   creatorAddress: string;
   marketAddress: string;
   postMessage: string;

@@ -4,7 +4,6 @@ import { usePrivy } from "@privy-io/react-auth";
 
 const CreateToken: React.FC = () => {
   const [username, setUsername] = useState<string>("");
-  const [tokenName, setTokenName] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const { ready, authenticated, user } = usePrivy();
   const router = useRouter();
@@ -52,7 +51,6 @@ const CreateToken: React.FC = () => {
           },
           body: JSON.stringify({
             walletAddress: user.wallet.address,
-            tokenName,
             privy_id: user.id,
             username,
             profileName: _profileName,
@@ -72,7 +70,6 @@ const CreateToken: React.FC = () => {
             },
             body: JSON.stringify({
               tokenId: user.wallet.address,
-              tokenName,
               totalSupply: 0,
               priceETH: 0,
               priceUSD: 0,
@@ -143,7 +140,7 @@ const CreateToken: React.FC = () => {
                 className="block text-gray-700 text-sm font-bold mb-2"
                 htmlFor="username"
               >
-                Username
+                Create a Username
               </label>
               <input
                 id="username"
@@ -156,28 +153,12 @@ const CreateToken: React.FC = () => {
                 required
               />
             </div>
-            <div className="mb-4">
-              <label
-                className="block text-gray-700 text-sm font-bold mb-2"
-                htmlFor="tokenName"
-              >
-                Token Name (All Caps)
-              </label>
-              <input
-                id="tokenName"
-                type="text"
-                value={tokenName}
-                onChange={(e) => setTokenName(e.target.value.toUpperCase())}
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                required
-              />
-            </div>
             <div className="flex items-center justify-between">
               <button
                 type="submit"
                 className="bg-fuchsia-500 hover:bg-fuchsia-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               >
-                Create Token
+                Create Account
               </button>
             </div>
           </form>

@@ -50,7 +50,6 @@ const CreateMarketModal: React.FC<CreateMarketModalProps> = ({ isOpenCreateModal
     const marketData = {
       creatorAddress: user?.wallet?.address || '',
       marketAddress: expiry.toISOString(),
-      tokenName: userInfo?.tokenDetails.tokenName,
       marketType: "Binary",
       postMessage: marketInfo.title,
       options: [

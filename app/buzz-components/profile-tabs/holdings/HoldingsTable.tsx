@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaSearch, FaTimes } from "react-icons/fa";
-import{useUser} from "../../../../contexts/UserContext"
+import { useUser } from "../../../../contexts/UserContext";
 
 interface UserHoldings {
   username: string;
@@ -15,16 +15,15 @@ interface HoldingsTableProps {
 }
 
 interface TokenOwnedEntry {
-  [tokenId: string]: string;  // Dynamic property names with string values
-}
-interface TokensOwned {
-  array: TokenOwnedEntry[];
+  tokenId: string;
+  amount: number;
 }
 
-function getAmountForToken(tokenId: string, tokensOwned: TokensOwned): string {
-  const tokenEntry = tokensOwned.array.find(entry => Object.hasOwnProperty.call(entry, tokenId));
-  return tokenEntry ? tokenEntry[tokenId] : 'Unknown';
+function getAmountForToken(tokenId: string, tokensOwned: TokenOwnedEntry[]): number {
+  const tokenEntry = tokensOwned.find(entry => entry.tokenId === tokenId);
+  return tokenEntry ? tokenEntry.amount : 0;
 }
+
 const HoldingsTable = ({ holdingDetails }: HoldingsTableProps) => {
   const [data, setData] = useState<UserHoldings[]>(holdingDetails || []);
   const [searchText, setSearchText] = useState("");
@@ -119,7 +118,7 @@ const HoldingsTable = ({ holdingDetails }: HoldingsTableProps) => {
                 <td className="px-6 py-2 md:px-10 whitespace-nowrap">
                   {item.priceUSD}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap"> {getAmountForToken(item.tokenId, userInfo?.tokensOwned ?? { array: [] })}</td>
+                <td className="px-4 py-2 whitespace-nowrap"> {getAmountForToken(item.tokenId, userInfo?.tokensOwned ?? [])}</td>
                 <td className="px-4 py-2 hidden md:table-cell whitespace-nowrap">
                   {item.volume}
                 </td>

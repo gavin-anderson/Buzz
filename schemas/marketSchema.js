@@ -13,7 +13,6 @@ const bettorsSchema = Joi.object({
 export const marketSchema = Joi.object({
   creatorAddress: Joi.string().required(), // Made required
   marketAddress: Joi.string().required(), // Made required
-  tokenName: Joi.string().required(),
   marketType: Joi.string().required(), // Made required
   postMessage: Joi.string().required(),
   options: Joi.array().items(marketOptionSchema).required(),

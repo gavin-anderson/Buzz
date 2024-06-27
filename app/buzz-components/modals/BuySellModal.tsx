@@ -18,7 +18,6 @@ interface CommentData {
 
 interface MarketData {
   username: string;
-  tokenName: string;
   creatorAddress: string;
   marketAddress: string;
   postMessage: string;
@@ -61,7 +60,6 @@ const BuySell: React.FC<BuySellProps> = ({
     try {
       const transactionData = {
         tokenId: selectedBet.creatorAddress,
-        tokenName: selectedBet.tokenName,
         traderId: user?.wallet?.address,
         transactionHash: "0xDummyHash", // Replace with actual transaction hash
         buySell: activeTab === "buy",

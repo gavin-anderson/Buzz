@@ -7,7 +7,6 @@ const tokenOwnedSchema = Joi.object({
 
 export const userSchema = Joi.object({
   walletAddress: Joi.string().required(),
-  tokenName: Joi.string().required(),
   privy_id: Joi.string().required(),
   username: Joi.string().required(),
   profileName: Joi.string().required(),
