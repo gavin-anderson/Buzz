@@ -43,7 +43,7 @@ const Creators = () => {
   
     fetchData();
   }, []);
-
+  console.log("Table Data",tableData);
   return (
     <MainContainer>
       {user && (
@@ -89,7 +89,6 @@ const Creators = () => {
                   role="tabpanel"
                 >
                   <PopularCreatorsTable tableData={tableData} />
-                  {/* Placeholder for Popular content */}
                 </div>
               )}
               {activeTab === "new" && (

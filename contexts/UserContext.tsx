@@ -8,6 +8,7 @@ interface TokenHolderList {
 
 interface TokenDetails {
     tokenSupply: number;
+    tokenName: string;
     priceETH: number;
     priceUSD: number;
     totalTrades: number;
@@ -19,18 +20,19 @@ interface TokenDetails {
 }
 
 interface TokensOwned {
-    array: Array<any>; // Replace `any` with more specific type if known
-    length: number;
+    tokenId: string;
+    amount: number;
 }
 
 interface UserProfile {
     profileName: string;
     username: string;
-    tokensOwned: TokensOwned;
+    walletAddress:string;
+    tokensOwned: TokensOwned[];
     tokenDetails: TokenDetails;
 }
 
-const UserContext = createContext<UserProfile | null>(null);  // Define `UserProfile` as per the shape of user info data
+const UserContext = createContext<UserProfile | null>(null);
 
 export const useUser = () => useContext(UserContext);
 
@@ -52,7 +54,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
                         throw new Error('Network response was not ok');
                     }
                     const data = await response.json();
-                    setUserInfo(data);
+                    // Ensure tokensOwned is always an array
+                    const tokensOwned = Array.isArray(data.tokensOwned) ? data.tokensOwned : [];
+                    setUserInfo({ ...data, tokensOwned });
                 } catch (error) {
                     console.error('Failed to fetch user info', error);
                 }
@@ -62,7 +66,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         };
 
         fetchUserInfo();
-    }, [user?.id]); // Dependency on user?.id to refetch when it changes
+    }, [user?.id]);
 
     return (
         <UserContext.Provider value={userInfo}>

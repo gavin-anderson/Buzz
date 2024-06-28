@@ -30,12 +30,10 @@ interface MarketData {
   totalVolume: number;
   totalBettors: number;
   isTokenOwned: boolean;
+  hasBet: boolean;
+  userBalance: number;
   comments: CommentData[];
   postedAgo: string;
-}
-
-interface MainFeedProps {
-  marketFeed: MarketData[];
 }
 
 const Home = () => {
@@ -70,31 +68,6 @@ const Home = () => {
     };
 
     fetchMarkets();
-  }, [ready, authenticated, user]);
-
-  useEffect(() => {
-    const createToken = async () => {
-      if (ready && authenticated && user && user.wallet) {
-        try {
-          const response = await fetch('/api/create-token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ tokenId: user.wallet.address }),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to create token');
-          }
-        } catch (error) {
-          console.error('Error creating token:', error);
-        }
-      }
-    };
-
-    createToken();
   }, [ready, authenticated, user]);
 
   if (loading) {

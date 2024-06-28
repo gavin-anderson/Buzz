@@ -1,6 +1,6 @@
 import { FaRegClock } from "react-icons/fa";
 
-const BettingCard = () => {
+const TransactionCard = () => {
   const cardsData = [
     {
       username: "@ansem",
@@ -109,4 +109,4 @@ const DetailBox: React.FC<DetailBoxProps> = ({ label, value }) => {
   );
 };
 
-export default BettingCard;
+export default TransactionCard;

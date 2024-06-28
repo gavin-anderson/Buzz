@@ -1,26 +1,85 @@
-import { useState, useMemo } from "react";
+import React, { useState } from "react";
 
-const BetModal = ({
+interface BetModalProps {
+  isOpenBetModal: boolean;
+  setOpenBetModal: (isOpen: boolean) => void;
+  selectedBet: {
+    postMessage: string;
+    username: string;
+    userBalance: number;
+    creatorAddress: string;
+    marketAddress: string;
+    option1: string;
+    option2: string;
+  };
+  selectedOptions: {
+    label: string;
+    multiplier: number;
+  };
+  traderId: string;
+}
+
+const BetModal: React.FC<BetModalProps> = ({
   isOpenBetModal,
   setOpenBetModal,
   selectedBet,
   selectedOptions,
-  placeBet,
+  traderId
 }) => {
-  const [betAmount, setBetAmount] = useState(0);
-  const totalBalance = 2325; // Total balance available
+  const [betAmount, setBetAmount] = useState<number>(0);
+  const [winAmount, setWinAmount] = useState<number>(0);
+  console.log("SELECTEDBET", selectedBet);
 
   function onCloseModal() {
     setOpenBetModal(false);
   }
 
-  const handleSubmitBet = () => {
-    placeBet(selectedBet.userHandle);
-    setOpenBetModal(false);
+  const handleSubmitBet = async () => {
+    const yesAmount = selectedOptions.label === selectedBet.option1 ? toWin() : 0;
+    const noAmount = selectedOptions.label === selectedBet.option2 ? toWin() : 0;
+
+    const transactionData = {
+      marketId: selectedBet.marketAddress,
+      creatorId: selectedBet.creatorAddress,
+      traderId,
+      transactionId: 'TX-hash', // Replace with actual transactionId
+      isMint: true,
+      isfinalRedeem: false,
+      tokensAmount: betAmount,
+      priceBefore: 0,
+      priceAfter: 0,
+      yesPoolBefore: 0,
+      yesPoolAfter: 0,
+      noPoolBefore: 0,
+      noPoolAfter: 0,
+      tokensBurned: 0,
+      yesAmount,
+      noAmount,
+    };
+
+    try {
+      const response = await fetch('/api/marketTx/submit-market-tx', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(transactionData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit transaction');
+      }
+
+      const data = await response.json();
+      console.log(data);
+      setOpenBetModal(false);
+    } catch (error) {
+      console.error('Error submitting transaction:', error);
+    }
   };
 
-  function handleSetAmount(percentage) {
-    setBetAmount(Math.floor(selectedBet.balance * percentage));
+  function handleSetAmount(percentage: number) {
+    setBetAmount(Math.floor(selectedBet.userBalance * percentage));
   }
 
   function toWin() {
@@ -40,7 +99,7 @@ const BetModal = ({
         </button>
         <div className="space-y-2">
           <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-            {selectedBet.question}
+            {selectedBet.postMessage}
           </h3>
           <p className="text-gray-500">Selection: {selectedOptions.label}</p>
           <div className="flex items-center justify-center gap-4 pt-8 w-full">
@@ -60,7 +119,7 @@ const BetModal = ({
           </div>
           <div className="flex justify-between items-center pt-4 pb-8">
             <span className="text-gray-500">
-              Balance: {selectedBet.balance}
+              Balance: {selectedBet.userBalance}
             </span>
             <div>
               <button
@@ -93,7 +152,7 @@ const BetModal = ({
             className="w-full px-4 py-2 bg-fuchsia-800 hover:bg-fuchsia-900 text-white rounded-full"
             onClick={handleSubmitBet}
           >
-            Bet {betAmount} {selectedBet.userHandle}
+            Bet {betAmount} {selectedBet.username}
             <p className="text-center text-white text-xs">To Win: {toWin()}</p>
           </button>
         </div>

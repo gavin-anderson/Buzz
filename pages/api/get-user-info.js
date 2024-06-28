@@ -7,7 +7,7 @@ async function getUserInfo(req, res) {
     }
 
     try {
-        console.log("get-user-info")
+        console.log("get-user-info");
         const { db } = await connectToDatabase();
 
         // Retrieve user details by privy_id
@@ -20,10 +20,8 @@ async function getUserInfo(req, res) {
         const result = {
             profileName: user.profileName || 'N/A',
             username: user.username || 'N/A',
-            tokensOwned: {
-                array: user.tokensOwned || [],
-                length: user.tokensOwned ? user.tokensOwned.length : 0
-            },
+            walletAddress: user.walletAddress || "N/A",
+            tokensOwned: user.tokensOwned || [], // Directly assign the tokensOwned array
             tokenDetails: null // Default token details to null if not found
         };
 
@@ -39,10 +37,7 @@ async function getUserInfo(req, res) {
                 volume: tokenDetails.volume,
                 totalUserFees: tokenDetails.totalUserFees,
                 totalProtocolFees: tokenDetails.totalProtocolFees,
-                tokenHolders: {
-                    array: tokenDetails.tokenHolders || [],
-                    length: tokenDetails.tokenHolders ? tokenDetails.tokenHolders.length : 0
-                }
+                tokenHolders: tokenDetails.tokenHolders || []
             };
         }
 
