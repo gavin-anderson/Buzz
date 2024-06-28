@@ -4,11 +4,26 @@ import { usePrivy } from "@privy-io/react-auth";
 import { useRouter } from "next/router";
 import SearchUsers from "./right-pane/SearchUsers";
 
-type NavLayoutProps = {
+interface UserProfile {
+  profileName: string;
+  tokenDetails: {
+    tokenSupply: number;
+    priceETH: number;
+    priceUSD: number;
+    totalTrades: number;
+    curveETH: number;
+  };
+  tokensOwned: Array<{ tokenId: string; amount: number }>;
+  username: string;
+  walletAddress: string;
+}
+
+interface NavLayoutProps {
   children: ReactNode;
+  userInfo: UserProfile | null;
 };
 
-const NavLayout = ({ children }: NavLayoutProps) => {
+const NavLayout = ({ children, userInfo }: NavLayoutProps) => {
   const { ready, authenticated, user } = usePrivy();
   const router = useRouter();
   useEffect(() => {
@@ -34,7 +49,7 @@ const NavLayout = ({ children }: NavLayoutProps) => {
     <>
       {ready && authenticated ? (
         <>
-          <Sidebar />
+          <Sidebar userInfo= {userInfo}/>
           <div className="flex" style={{ minHeight: "100vh" }}>
             <div
               style={{

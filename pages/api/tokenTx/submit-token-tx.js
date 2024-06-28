@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     console.error("Validation Error:", error.details);
     return res.status(400).json({ error: error.details[0].message });
   }
-  console.log("submit-tokenTx")
+
   const { db, client } = await connectToDatabase();
   const session = client.startSession();
 
@@ -30,14 +30,15 @@ export default async function handler(req, res) {
       throw new Error('User not found');
     }
 
-    // Update token and user balances
     let updatedTokenHolders;
     let totalVolumeUpdate = value.amountOut;
     let totalTradesUpdate = 1;
 
-    if (value.buySell) {
+    if (value.buySell && !value.isTransfer) {
       // Buy
       const existingHolderIndex = token.tokenHolders.findIndex(holder => holder.userId === value.traderId);
+      let newHolder = false;
+      
       if (existingHolderIndex > -1) {
         updatedTokenHolders = token.tokenHolders.map(holder =>
           holder.userId === value.traderId
@@ -46,12 +47,18 @@ export default async function handler(req, res) {
         );
       } else {
         updatedTokenHolders = [...token.tokenHolders, { userId: value.traderId, amount: value.amountOut }];
+        newHolder = true;
       }
 
       await db.collection('tokens').updateOne(
         { tokenId: value.tokenId },
         {
-          $inc: { totalSupply: value.amountOut, volume: totalVolumeUpdate, totalTrades: totalTradesUpdate },
+          $inc: {
+            totalSupply: value.amountOut,
+            volume: totalVolumeUpdate,
+            totalTrades: totalTradesUpdate,
+            totalNonMarketHolders: newHolder ? 1 : 0
+          },
           $set: { tokenHolders: updatedTokenHolders },
         },
         { session }
@@ -75,18 +82,31 @@ export default async function handler(req, res) {
         { $set: { tokensOwned: updatedTokensOwned } },
         { session }
       );
-    } else {
-      // Sell (handle sell logic)
+
+    } else if (!value.buySell && !value.isTransfer) {
+      // Sell
+      const existingHolderIndex = token.tokenHolders.findIndex(holder => holder.userId === value.traderId);
+      if (existingHolderIndex === -1) {
+        throw new Error('Token not owned by user');
+      }
+
       updatedTokenHolders = token.tokenHolders.map(holder =>
         holder.userId === value.traderId
           ? { ...holder, amount: holder.amount - value.amountOut }
           : holder
-      ).filter(holder => holder.amount > 0); // Remove holders with zero amount
+      ).filter(holder => holder.amount > 0);
+
+      const wasRemoved = updatedTokenHolders.length < token.tokenHolders.length;
 
       await db.collection('tokens').updateOne(
         { tokenId: value.tokenId },
         {
-          $inc: { totalSupply: -value.amountOut, volume: totalVolumeUpdate, totalTrades: totalTradesUpdate },
+          $inc: {
+            totalSupply: -value.amountOut,
+            volume: totalVolumeUpdate,
+            totalTrades: totalTradesUpdate,
+            totalNonMarketHolders: wasRemoved ? -1 : 0
+          },
           $set: { tokenHolders: updatedTokenHolders },
         },
         { session }
@@ -100,7 +120,7 @@ export default async function handler(req, res) {
           tokenOwned.tokenId === value.tokenId
             ? { ...tokenOwned, amount: tokenOwned.amount - value.amountOut }
             : tokenOwned
-        ).filter(tokenOwned => tokenOwned.amount > 0); // Remove tokens with zero amount
+        ).filter(tokenOwned => tokenOwned.amount > 0);
       } else {
         throw new Error('Token not owned by user');
       }
@@ -110,6 +130,7 @@ export default async function handler(req, res) {
         { $set: { tokensOwned: updatedTokensOwned } },
         { session }
       );
+
     }
 
     // Save the token transaction

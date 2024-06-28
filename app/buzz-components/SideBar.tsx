@@ -20,11 +20,29 @@ import { Button, Modal } from "flowbite-react";
 import { usePrivy } from "@privy-io/react-auth";
 import CreateMarketModal from "./modals/CreateMarketModal";
 
-const Sidebar = ({}) => {
+interface UserProfile {
+  profileName: string;
+  tokenDetails: {
+    tokenSupply: number;
+    priceETH: number;
+    priceUSD: number;
+    totalTrades: number;
+    curveETH: number;
+  };
+  tokensOwned: Array<{ tokenId: string; amount: number }>;
+  username: string;
+  walletAddress: string;
+}
+
+interface SidebarProps {
+  userInfo: UserProfile | null;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ userInfo }) => {
   const router = useRouter();
   const { logout } = usePrivy();
 
-  const { user } = usePrivy();
+  // const { user } = usePrivy();
 
   const [isBottomNavVisible, setIsBottomNavVisible] = useState(false);
 
@@ -79,55 +97,50 @@ const Sidebar = ({}) => {
     <>
       <Link
         href="/home"
-        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
-          router.pathname === "/home"
+        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${router.pathname === "/home"
             ? "font-black"
             : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-        }`}
+          }`}
       >
         <FaHome className="sidebar-icon" />
         <span className="sidebar-text">Home</span>
       </Link>
       <Link
         href="/notifications"
-        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
-          router.pathname === "/notifications"
+        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${router.pathname === "/notifications"
             ? "font-black"
             : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-        }`}
+          }`}
       >
         <FaBell className="sidebar-icon" />
         <span className="sidebar-text">Notifications</span>
       </Link>
       <Link
         href="/creators"
-        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
-          router.pathname === "/creators"
+        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${router.pathname === "/creators"
             ? "font-black"
             : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-        }`}
+          }`}
       >
         <FaUsers className="sidebar-icon" />
         <span className="sidebar-text">Creators</span>
       </Link>
       <Link
         href="/profile"
-        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${
-          router.pathname === "/profile"
+        className={`flex items-center p-4 text-lg rounded-3xl text-fuchsia-950 group ${router.pathname === "/profile"
             ? "font-black"
             : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-        }`}
+          }`}
       >
         <FaUser className="sidebar-icon" />
         <span className="sidebar-text">Profile</span>
       </Link>
       <Link
         href="/create"
-        className={`flex items-center justify-center text-lg  p-4 rounded-3xl text-white   group ${
-          router.pathname === "/create"
+        className={`flex items-center justify-center text-lg  p-4 rounded-3xl text-white   group ${router.pathname === "/create"
             ? "bg-gradient-to-tl text-white from-fuchsia-200 to-fuchsia-600  hover:bg-gradient-to-tl hover:text-white hover:from-fuchsia-300 hover:to-fuchsia-700 "
             : "bg-gradient-to-tl text-white from-fuchsia-200 to-fuchsia-600 hover:bg-gradient-to-tl hover:text-white hover:from-fuchsia-300 hover:to-fuchsia-700"
-        }`}
+          }`}
       >
         <FaPlusSquare className="sidebar-icon" />
         <span className="sidebar-text">Create</span>
@@ -140,9 +153,8 @@ const Sidebar = ({}) => {
       {/* Sidebar element with conditional CSS for translation */}
       {!isBottomNavVisible && (
         <aside
-          className={`fixed top-0 left-0  h-screen shadow-xl  bg-white border-r border-gray-50 dark:bg-fuchsia-950 dark:border-fuchsia-700 transition-transform ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+          className={`fixed top-0 left-0  h-screen shadow-xl  bg-white border-r border-gray-50 dark:bg-fuchsia-950 dark:border-fuchsia-700 transition-transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
           style={{ width: "300px" }}
           aria-label="Sidebar"
         >
@@ -159,11 +171,10 @@ const Sidebar = ({}) => {
               <ul className="space-y-2 font-medium">
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${
-                      router.pathname === "/home"
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${router.pathname === "/home"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-                    }`}
+                      }`}
                     href="/home"
                   >
                     <FaHome size={"20px"} className="mr-3" />
@@ -172,11 +183,10 @@ const Sidebar = ({}) => {
                 </li>
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${
-                      router.pathname === "/notifications"
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${router.pathname === "/notifications"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-                    }`}
+                      }`}
                     href="/notifications"
                   >
                     <FaBell size={"20px"} className="mr-3" />
@@ -185,11 +195,10 @@ const Sidebar = ({}) => {
                 </li>
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${
-                      router.pathname === "/creators"
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group ${router.pathname === "/creators"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-                    }`}
+                      }`}
                     href="/creators"
                   >
                     <FaUsers size={"20px"} className="mr-3" />
@@ -198,11 +207,10 @@ const Sidebar = ({}) => {
                 </li>
                 <li>
                   <Link
-                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group mb-3 ${
-                      router.pathname === "/profile"
+                    className={`flex items-center p-4 text-lg rounded-3xl text-gray-950 group mb-3 ${router.pathname === "/profile"
                         ? "font-black"
                         : "hover:bg-gradient-to-tl hover:text-fuchsia-950 hover:from-fuchsia-50 hover:to-fuchsia-100"
-                    }`}
+                      }`}
                     href="/profile"
                   >
                     <FaUser size={"20px"} className="mr-3" />
@@ -227,9 +235,9 @@ const Sidebar = ({}) => {
                 >
                   {isDropdownOpen
                     ? "Close"
-                    : user && user.google
-                    ? user.google.name
-                    : "Loading..."}
+                    : userInfo?.username
+                      ? userInfo.username
+                      : "Loading..."}
                 </button>
                 {isDropdownOpen && (
                   <div className="absolute top-[-120px] flex flex-col items-center   rounded-3xl p-2 w-48">
@@ -255,7 +263,7 @@ const Sidebar = ({}) => {
       {isBottomNavVisible && (
         <div className="bottom-nav shadow-xl ">{navItems}</div>
       )}
-      {user && (
+      {userInfo && (
         <Modal
           className=" "
           show={isWalletModalOpen}
@@ -280,8 +288,8 @@ const Sidebar = ({}) => {
               <div className="flex items-center">
                 <FaCircle className="text-2xl text-fuchsia-500 mr-2" />
                 <span className="text-gray-700">
-                  {user.wallet
-                    ? truncateAddress(user.wallet.address)
+                  {userInfo
+                    ? truncateAddress(userInfo.walletAddress)
                     : "No wallet address"}
                 </span>
               </div>
@@ -291,9 +299,8 @@ const Sidebar = ({}) => {
                 </span>
                 <button
                   onClick={() =>
-                    user.wallet &&
-                    user.wallet.address &&
-                    copyToClipboard(user.wallet.address)
+                    userInfo.walletAddress &&
+                    copyToClipboard(userInfo.walletAddress)
                   }
                   className="text-gray-600 hover:text-gray-800"
                 >

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { FaDollarSign, FaEthereum, FaHandHoldingUsd } from "react-icons/fa";
-import { usePrivy } from "@privy-io/react-auth";
+
 interface CommentData {
   userId: string;
   marketId: string;
@@ -34,18 +34,18 @@ interface MarketData {
 interface BuySellProps {
   isOpenBuySellModal: boolean;
   setOpenBuySellModal: (isOpen: boolean) => void;
-  buyToken: (token: string) => void;
   selectedBet: MarketData | null;
+  traderId: string;
 }
 
 const BuySell: React.FC<BuySellProps> = ({
   isOpenBuySellModal,
   setOpenBuySellModal,
-  buyToken,
   selectedBet,
+  traderId
 }) => {
-  console.log("SelectedBet: ",selectedBet);
-  const { user } = usePrivy();
+  console.log("SelectedBet: ", selectedBet);
+
   const [activeTab, setActiveTab] = useState("buy");
   const [buyAmount, setBuyAmount] = useState(0);
   const [ethAmount, setEthAmount] = useState(0);
@@ -60,7 +60,7 @@ const BuySell: React.FC<BuySellProps> = ({
     try {
       const transactionData = {
         tokenId: selectedBet.creatorAddress,
-        traderId: user?.wallet?.address,
+        traderId,
         transactionHash: "0xDummyHash", // Replace with actual transaction hash
         buySell: activeTab === "buy",
         amountIn: ethAmount,
@@ -71,6 +71,7 @@ const BuySell: React.FC<BuySellProps> = ({
         curveConstantAfter: 0, // Replace with actual curve constant after
         userFees: 0, // Replace with actual user fees
         protocolFees: 0, // Replace with actual protocol fees
+        isTransfer: false,
       };
       const response = await fetch('/api/tokenTx/submit-token-tx', {
         method: 'POST',
@@ -124,8 +125,8 @@ const BuySell: React.FC<BuySellProps> = ({
               <li className="flex-1 min-w-0" key={name}>
                 <button
                   className={`inline-flex items-center justify-center p-4 border-b-2 text-xs sm:text-sm md:text-md ${activeTab === name.toLowerCase()
-                      ? "text-gray-900 border-gray-900"
-                      : "text-gray-500 border-gray-100 hover:text-gray-600 hover:border-gray-300"
+                    ? "text-gray-900 border-gray-900"
+                    : "text-gray-500 border-gray-100 hover:text-gray-600 hover:border-gray-300"
                     } rounded-t-lg w-full`}
                   onClick={() => setActiveTab(name.toLowerCase())}
                   type="button"

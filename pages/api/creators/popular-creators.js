@@ -1,7 +1,5 @@
-// Assuming you have a `mongodb.js` for DB connection, import it here:
 import { connectToDatabase } from '../../../lib/mongodb';
 
-// Define the function to fetch all users with their market data using MongoDB aggregation
 async function allUsersWithMarketData() {
   console.log("popular-creators");
   const { db } = await connectToDatabase();
@@ -17,18 +15,9 @@ async function allUsersWithMarketData() {
     {
       $lookup: {
         from: "tokens",
-        let: { userWallet: "$walletAddress" },
-        pipeline: [
-          { $unwind: "$tokenHolders" },
-          {
-            $match: {
-              $expr: {
-                $eq: ["$tokenHolders.userId", "$$userWallet"]
-              }
-            }
-          }
-        ],
-        as: "tokensHeld"
+        localField: "walletAddress",
+        foreignField: "tokenId",
+        as: "tokenData"
       }
     },
     {
@@ -43,29 +32,19 @@ async function allUsersWithMarketData() {
             }
           }
         },
-        tokenHolders: {
-          $reduce: {
-            input: "$tokensHeld",
-            initialValue: { total: 0, count: 0 },
-            in: {
-              total: { $add: ["$$value.total", "$$this.tokenHolders.amount"] },
-              count: { $add: ["$$value.count", 1] }
-            }
-          }
-        }
+        totalNonMarketHolders: { $arrayElemAt: ["$tokenData.totalNonMarketHolders", 0] },
       }
     }
   ]).toArray();
   return users;
 }
 
-// Define the function to format user data for response
 function formatUserData(user) {
   return {
     username: user.username || "0",
     profileName: user.profileName || "0",
-    tokenPrice: formatTokenPrice(user.tokensOwned),
-    holders: user.tokenHolders.count || 0,
+    tokenPrice: 0,
+    holders: user.totalNonMarketHolders || 0,
     markets: user.totalMarkets || 0,
     liveMarkets: user.liveMarkets || 0,
     "24h": "0",
@@ -84,15 +63,6 @@ function formatDate(dateString) {
   return `${year}-${formattedMonth}-${formattedDay}`;
 }
 
-function formatTokenPrice(tokensOwned) {
-  if (tokensOwned && tokensOwned.length > 0) {
-    const firstToken = tokensOwned[0];
-    return firstToken.amount ? `${firstToken.amount}` : "0";
-  }
-  return "0";
-}
-
-// API handler for Next.js API route
 export default async function handler(req, res) {
   try {
     const users = await allUsersWithMarketData();

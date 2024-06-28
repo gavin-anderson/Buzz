@@ -20,6 +20,7 @@ async function getUserInfo(req, res) {
         const result = {
             profileName: user.profileName || 'N/A',
             username: user.username || 'N/A',
+            walletAddress: user.walletAddress || "N/A",
             tokensOwned: user.tokensOwned || [], // Directly assign the tokensOwned array
             tokenDetails: null // Default token details to null if not found
         };

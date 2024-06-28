@@ -81,6 +81,7 @@ const CreateToken: React.FC = () => {
               volume: 0,
               totalUserFees: 0,
               totalProtocolFees: 0,
+              totalNonMarketHolders: 0,
               tokenHolders: [],
             }),
           });

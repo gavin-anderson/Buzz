@@ -33,6 +33,14 @@ async function getMarkets(req, res) {
             const creatorUser = usersMap[market.creatorAddress];
             const isTokenOwned = tokenAddresses.includes(market.creatorAddress);
 
+            // Calculate user balance for the market's token
+            const userBalance = user.tokensOwned.reduce((acc, token) => {
+                if (token.tokenId === market.creatorAddress) {
+                    return acc + token.amount;
+                }
+                return acc;
+            }, 0);
+
             // Ensure comments is an array before mapping over it
             const marketComments = market.comments ? market.comments.map(comment => ({
                 ...comment,
@@ -43,7 +51,6 @@ async function getMarkets(req, res) {
                 username: creatorUser ? creatorUser.username : 'Unknown',
                 creatorAddress: market.creatorAddress,
                 marketAddress: market.marketAddress,
-                tokenName: market.tokenName,
                 postMessage: market.postMessage,
                 option1: market.options[0].A,
                 option2: market.options[0].B,
@@ -52,6 +59,7 @@ async function getMarkets(req, res) {
                 totalBettors: market.totalBettors,
                 postedAgo: calculateTimeAgo(market.createdAt),
                 isTokenOwned,
+                userBalance, // Include user balance
                 comments: marketComments
             };
         });

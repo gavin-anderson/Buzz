@@ -30,13 +30,12 @@ interface MarketData {
   totalVolume: number;
   totalBettors: number;
   isTokenOwned: boolean;
+  hasBet: boolean;
+  userBalance: number;
   comments: CommentData[];
   postedAgo: string;
 }
 
-interface MainFeedProps {
-  marketFeed: MarketData[];
-}
 const Home = () => {
   const { ready, authenticated, user } = usePrivy();
   const router = useRouter();

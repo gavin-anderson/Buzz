@@ -16,6 +16,7 @@ export const tokenSchema = Joi.object({
   curveETH: Joi.number().optional(),
   totalTrades: Joi.number().optional(),
   volume: Joi.number().optional(),
+  totalNonMarketHolders: Joi.number().required(),
   totalUserFees: Joi.number().optional(),
   totalProtocolFees: Joi.number().optional(),
   tokenHolders: Joi.array().items(tokenHolderSchema).required(),

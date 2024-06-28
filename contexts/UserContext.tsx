@@ -27,6 +27,7 @@ interface TokensOwned {
 interface UserProfile {
     profileName: string;
     username: string;
+    walletAddress:string;
     tokensOwned: TokensOwned[];
     tokenDetails: TokenDetails;
 }
