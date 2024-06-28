@@ -9,6 +9,8 @@ interface BetModalProps {
     userBalance: number;
     creatorAddress: string;
     marketAddress: string;
+    option1: string;
+    option2: string;
   };
   selectedOptions: {
     label: string;
@@ -25,16 +27,21 @@ const BetModal: React.FC<BetModalProps> = ({
   traderId
 }) => {
   const [betAmount, setBetAmount] = useState<number>(0);
+  const [winAmount, setWinAmount] = useState<number>(0);
   console.log("SELECTEDBET", selectedBet);
+
   function onCloseModal() {
     setOpenBetModal(false);
   }
 
   const handleSubmitBet = async () => {
+    const yesAmount = selectedOptions.label === selectedBet.option1 ? toWin() : 0;
+    const noAmount = selectedOptions.label === selectedBet.option2 ? toWin() : 0;
+
     const transactionData = {
       marketId: selectedBet.marketAddress,
-      creatorId: selectedBet.creatorAddress, // Replace with actual creatorId
-      traderId, // Replace with actual traderId
+      creatorId: selectedBet.creatorAddress,
+      traderId,
       transactionId: 'TX-hash', // Replace with actual transactionId
       isMint: true,
       isfinalRedeem: false,
@@ -46,8 +53,8 @@ const BetModal: React.FC<BetModalProps> = ({
       noPoolBefore: 0,
       noPoolAfter: 0,
       tokensBurned: 0,
-      yesAmount: 0,
-      noAmount: 0,
+      yesAmount,
+      noAmount,
     };
 
     try {

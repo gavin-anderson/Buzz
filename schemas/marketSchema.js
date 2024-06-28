@@ -7,6 +7,7 @@ const marketOptionSchema = Joi.object({
 });
 const bettorsSchema = Joi.object({
   bettor: Joi.string().required(),
+  amountBet: Joi.number().required(),
   yesHeld: Joi.number().required(),
   noHeld: Joi.number().required()
 })

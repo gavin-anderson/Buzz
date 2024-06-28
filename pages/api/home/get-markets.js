@@ -41,6 +41,9 @@ async function getMarkets(req, res) {
                 return acc;
             }, 0);
 
+            // Check if the user has placed a bet on the market
+            const hasBet = market.bettors.some(bettor => bettor.bettor === req.query.userAddress);
+
             // Ensure comments is an array before mapping over it
             const marketComments = market.comments ? market.comments.map(comment => ({
                 ...comment,
@@ -59,6 +62,7 @@ async function getMarkets(req, res) {
                 totalBettors: market.totalBettors,
                 postedAgo: calculateTimeAgo(market.createdAt),
                 isTokenOwned,
+                hasBet,
                 userBalance, // Include user balance
                 comments: marketComments
             };

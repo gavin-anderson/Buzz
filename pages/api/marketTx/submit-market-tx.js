@@ -20,7 +20,7 @@ export default async function handler(req, res) {
         session.startTransaction();
 
         // Insert the market transaction
-        const result = await db.collection('marketTx').insertOne(value, { session });
+        const result = await db.collection('marketTxs').insertOne(value, { session });
 
         // Update the user's balance
         await db.collection('users').updateOne(
@@ -94,6 +94,47 @@ export default async function handler(req, res) {
 
         // Insert the new token transaction
         await db.collection('tokenTxs').insertOne(newTokenTx, { session });
+
+        // Update bettors in the market if isMint is true
+        if (value.isMint) {
+            const market = await db.collection('markets').findOne(
+                { marketAddress: value.marketId, 'bettors.bettor': value.traderId },
+                { session }
+            );
+
+            if (market) {
+                await db.collection('markets').updateOne(
+                    { marketAddress: value.marketId, 'bettors.bettor': value.traderId },
+                    {
+                        $inc: {
+                            'bettors.$[elem].yesHeld': value.yesAmount,
+                            'bettors.$[elem].noHeld': value.noAmount,
+                            'bettors.$[elem].amountBet': value.tokensAmount,
+                        },
+                    },
+                    {
+                        arrayFilters: [{ 'elem.bettor': value.traderId }],
+                        session
+                    }
+                );
+            } else {
+                await db.collection('markets').updateOne(
+                    { marketAddress: value.marketId },
+                    {
+                        $addToSet: { bettors: { bettor: value.traderId, amountBet: value.tokensAmount, yesHeld: value.yesAmount, noHeld: value.noAmount } },
+                        $inc: { totalBettors: 1 }
+                    },
+                    { session }
+                );
+            }
+
+            // Update the totalVolume of the market
+            await db.collection('markets').updateOne(
+                { marketAddress: value.marketId },
+                { $inc: { totalVolume: value.tokensAmount } },
+                { session }
+            );
+        }
 
         await session.commitTransaction();
         session.endSession();
